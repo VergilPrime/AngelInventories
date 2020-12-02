@@ -1,0 +1,64 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+
+plugins {
+    id 'java'
+    id 'idea'
+    id 'kr.entree.spigradle' version '2.2.3'
+}
+
+apply plugin: 'java'
+
+group = 'com.vergilprime'
+version = '1.0 beta'
+jar.archiveFileName = 'AngelInventories.jar'
+
+sourceCompatibility = '1.8'
+targetCompatibility = '1.8'
+
+repositories {
+    mavenCentral()
+    maven {
+        name = 'spigotmc-repo'
+        url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
+    }
+    maven {
+        name = 'sonatype'
+        url = 'https://oss.sonatype.org/content/groups/public/'
+    }
+}
+
+dependencies {
+    compileOnly 'org.spigotmc:spigot-api:1.16.3-R0.1-SNAPSHOT'
+    implementation 'com.google.code.gson:gson:2.8.6'
+}
+
+processResources {
+    from(sourceSets.main.resources.srcDirs) {
+        filter ReplaceTokens, tokens: [version: version]
+    }
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+spigot {
+    authors = ["VergilPrime"]
+    apiVersion = "1.16"
+    website = "Angels-Reach.com"
+    name = project.description
+    description = "Expand players' Ender Chests and allow instant access via /chest."
+    commands {
+        Chest {
+            description = "Access your Ender Chest anywhere."
+            permission = "AngelInventories.ChestCommand"
+            permissionMessage = "You must vote to gain access to your Ender Chest anywhere."
+            usage = "/chest"
+        }
+    }
+    permissions {
+        "AngelInventories.ChestCommand" {
+            description = "Open your Ender Chest anywhere."
+        }
+    }
+}
