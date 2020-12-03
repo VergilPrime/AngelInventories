@@ -11,9 +11,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.PlayerInventory;
 
 public class AngelInventoriesCommand implements CommandExecutor {
-    AngelInventories plugin;
+    public final AngelInventories plugin;
 
-    public AngelInventoriesCommand(com.vergilprime.angelinventories.AngelInventories plugin) {
+    public AngelInventoriesCommand(AngelInventories plugin) {
         this.plugin = plugin;
     }
 
