@@ -1,7 +1,10 @@
 package com.vergilprime.angelinventories;
 
+import com.vergilprime.angelinventories.events.PlayerListener;
 import com.vergilprime.angelinventories.sqlite.SQLite;
+import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.HashMap;
@@ -22,14 +25,29 @@ public final class AngelInventories extends JavaPlugin {
         config.addDefault("password", "password");
         config.options().copyDefaults(true);
         saveConfig();
+
         getCommand("ToggleInventory").setExecutor(new com.vergilprime.angelinventories.commands.ToggleInventory(this));
         getCommand("AngelInventories").setExecutor(new com.vergilprime.angelinventories.commands.AngelInventoriesCommand(this));
+
+        getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
+
         sqlite = new SQLite(this);
         sqlite.load();
+
+        // Since nobody should be online at startup this probably will do nothing
+        // Leaving it in case someone reloads.
+        UUID uuid;
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            uuid = player.getUniqueId();
+            sqlite.loadPlayerData(uuid);
+        }
     }
 
     @Override
     public void onDisable() {
-        //TODO: Save all open chests        
+        loadedPlayers.forEach((uuid, playerData) -> {
+            playerData.Save();
+        });
+        //TODO: Save all loaded players
     }
 }

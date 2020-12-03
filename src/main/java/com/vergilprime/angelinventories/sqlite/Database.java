@@ -170,11 +170,10 @@ public abstract class Database {
         }
     }
 
-    public int savePlayerData(UUID uuid) {
+    public int savePlayerInventories(UUID uuid) {
         PlayerData playerData = plugin.loadedPlayers.get(uuid);
         if (playerData != null) {
             PreparedStatement ps;
-            ResultSet rs;
             connection = getSQLConnection();
 
             String sqlQuery = "REPLACE INTO 'player_inventories' (uuid, inv_id, inventory_armor, inventory_storage, inventory_extra, inventory_offhand) ";
@@ -218,6 +217,23 @@ public abstract class Database {
                 ps.execute();
                 ps.close();
 
+                return 0;
+
+            } catch (SQLException throwables) {
+                throwables.printStackTrace();
+                return 2;
+            }
+        } else {
+            return 1;
+        }
+    }
+
+    public int SavePlayerPointers(UUID uuid) {
+        PlayerData playerData = plugin.loadedPlayers.get(uuid);
+        if (playerData != null) {
+            try {
+                PreparedStatement ps;
+
                 ps = connection.prepareStatement("REPLACE INTO 'player_data' (`uuid`, `current_pinv_index`, `current_custom_inv`) " +
                         "VALUES (?, ?, ?)");
 
@@ -229,13 +245,9 @@ public abstract class Database {
                 ps.close();
 
                 return 0;
-
-            } catch (SQLException throwables) {
-                throwables.printStackTrace();
+            } catch (SQLException ex) {
                 return 2;
             }
-
-
         } else {
             return 1;
         }

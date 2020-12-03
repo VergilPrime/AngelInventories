@@ -59,7 +59,7 @@ public class ToggleInventory implements CommandExecutor {
 
 
             } catch (NumberFormatException ex) {
-                sender.sendMessage("The only arguement should be the inventory you want to switch to!");
+                sender.sendMessage("The only argument should be the inventory you want to switch to!");
                 return false;
             }
             return true;

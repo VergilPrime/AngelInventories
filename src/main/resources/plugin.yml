@@ -3,6 +3,27 @@ version: @version@
 main: com.vergilprime.AngelInventories.AngelInventories
 api-version: 1.16
 prefix: AC
-authors: [ VergilPrime ]
-description: Swap out players' inventories for preset ones, and give them multiple to toggle through.
+load: POSTWORLD
+author: VergilPrime
+description: "Swap out players' inventories for preset ones, and give them multiple to toggle through."
 website: Angels-Reach.com
+  prefix: AngelInventories
+commands:
+  AngelInventories:
+    description: "Save a custom inventory with AI Save <Name> or swap a player's inventory with AI Set <Player> <Name>."
+    aliases: AI
+    permission: AngelInventories.Admin
+    usage: "Usage: /<command> <save|set> <inventoryname> [player]"
+  ToggleInventory:
+    description: "Shift through your available player inventories with /TI or switch to a specific one with /TI <#>."
+    aliases: TI
+    usage: "Usage: /<command> [inventory number]"
+  ResetInventory:
+    description: "Replace a user's custom inventory with their last used player inventory."
+    usage: "Usage: /<command> [player]"
+    permission: AngelInventories.Admin
+permissions:
+  AngelInventories.Inventories.#:
+    description: "Sets a players maximum amount of player inventories. (/TI)"
+  AngelInventories.Admin:
+    description: "Allows a user to save Custom Inventories and set them on themselves or others. (/AI)"

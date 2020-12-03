@@ -1,7 +1,8 @@
 main: com.vergilprime.angelinventories.AngelInventories
 name: AngelInventories
-version: 1.0 beta
-description: Expand players' Ender Chests and allow instant access via /chest.
+version: 0.1
+description: "Swap out players' inventories for preset ones, and give them multiple\
+  \ to toggle through."
 website: Angels-Reach.com
 authors:
  - VergilPrime

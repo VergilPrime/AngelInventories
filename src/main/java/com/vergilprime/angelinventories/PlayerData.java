@@ -13,15 +13,15 @@ public class PlayerData {
     private final UUID uuid;
     private final Player player;
     private final ArrayList<PlayerInventory> inventories;
-    private int pinv_index;
-    private String custom_inv;
+    private int playerInvIndex;
+    private String customInvName;
 
     public PlayerData(AngelInventories plugin, UUID uuid, Integer current_pinv_index, String current_custom_inv, ArrayList<PlayerInventory> playerInventories) {
         this.plugin = plugin;
         this.uuid = uuid;
         player = Bukkit.getPlayer(uuid);
-        pinv_index = current_pinv_index;
-        custom_inv = current_custom_inv;
+        playerInvIndex = current_pinv_index;
+        customInvName = current_custom_inv;
         inventories = playerInventories;
     }
 
@@ -29,63 +29,97 @@ public class PlayerData {
         return ToggleInventory(true, override);
     }
 
+    // Forward determines direction of cycling through inventories
+    // Override determines whether it works despite the player having a locked custom inventory on.
     public int ToggleInventory(boolean forward, boolean override) {
-        int newslot = pinv_index;
+        int newslot = playerInvIndex;
         if (forward) {
             newslot++;
+            // if newslot is beyond the player's last available inventory
             if (newslot > GetMaxInventories() - 1) {
+                // switch to the first inventory
                 newslot = 0;
             }
         } else {
             newslot--;
+            // if newslot is negative
             if (newslot < 0) {
+                // switch to the last inventory
                 newslot = GetMaxInventories() - 1;
             }
         }
         return ToggleInventory(newslot, override);
     }
 
+    // Index determines which inventory to switch to
+    // Override determines whether it works despite the player having a locked custom inventory on.
     public int ToggleInventory(int index, boolean override) {
         if (index >= inventories.size()) {
             inventories.add((PlayerInventory) Bukkit.createInventory(null, InventoryType.PLAYER));
         }
         // If current CustomInv is locked and override is false
-        if (!override && !custom_inv.isEmpty()) {
-            CustomInventory customInventory = plugin.customInventories.get(custom_inv);
+        if (!override && !customInvName.isEmpty()) {
+            CustomInventory customInventory = plugin.customInventories.get(customInvName);
             if (customInventory.getSetting() == CustomInventorySetting.locked) {
                 return 1;
             }
         }
-        int currentIndex = pinv_index;
-        SetInventory(inventories.get(pinv_index), player.getInventory());
-        SetInventory(player.getInventory(), inventories.get(index));
-        pinv_index = index;
-        Save();
-        return 0;
+        PlayerInventory newInventory = inventories.get(playerInvIndex);
+        if (newInventory != null) {
+            SaveInventories();
+            playerInvIndex = index;
+            SetInventory(player.getInventory(), newInventory);
+            SavePointers();
+            return 0;
+        } else {
+            return 1;
+        }
     }
 
     public int SetCustomInventory(String name) {
+        // Look for custom inventory at that name
         CustomInventory customInventory = plugin.customInventories.get(name);
-        switch (customInventory.getSetting()) {
-            case normal:
-            case locked:
-                int currentIndex = pinv_index;
-                //TODO: Save the player's current inventory at the current index;
-                SetInventory(inventories.get(pinv_index), player.getInventory());
-                SetInventory(player.getInventory(), customInventory.getInventory());
-                custom_inv = name;
-                Save();
-                break;
+
+        // Replace is determined by the CustomInventory's setting object
+        boolean replace;
+
+        // If a custom inventory exists with that name
+        if (customInventory != null) {
+            // Set Replace based on the CustomInventorySetting's value
+            if (customInventory.getSetting() == CustomInventorySetting.replace) {
+                replace = true;
+            } else {
+                replace = false;
+            }
+
+            // If not replacing the inventory we should save now so we can restore later
+            if (!replace) {
+                SaveInventories();
+            }
+
+            // New inventory is takeon out of customInventory object
+            PlayerInventory newInventory = customInventory.getInventory();
+
+            // Replace player's inventory with new inventory
+            SetInventory(player.getInventory(), newInventory);
+
+            // If not replacing inventory we must set customInvName so that we don't save over player's inventory later
+            if (!replace) {
+                customInvName = name;
+                SavePointers();
+                // if replacing inventory, save the new inventory and don't set customInvName.
+            } else {
+                SaveInventories();
+
+            }
+
+            return 0;
+        } else {
+            return 1;
         }
-
-        PlayerInventory newInventory = customInventory.getInventory();
-
-        SetInventory(player.getInventory(), newInventory);
-        return 0;
     }
 
     public Integer GetMaxInventories() {
-        //TODO: config this
         int max = plugin.config.getInt("MaxInventories");
 
         while (max > 1 && !player.hasPermission("AngelInventories.Inventories." + max)) {
@@ -102,9 +136,25 @@ public class PlayerData {
         inventory1.setStorageContents(inventory2.getStorageContents());
     }
 
-    public void Save() {
-        SetInventory(inventories.get(pinv_index), player.getInventory());
-        plugin.sqlite.savePlayerData(uuid);
+    public void SaveInventories() {
+        if (customInvName == null) {
+            SetInventory(inventories.get(playerInvIndex), player.getInventory());
+        }
+        plugin.sqlite.SavePlayerPointers(uuid);
+    }
+
+    public void SavePointers() {
+        int result = plugin.sqlite.SavePlayerPointers(uuid);
+        switch (result) {
+            case 0:
+                break;
+            case 1:
+                plugin.getLogger().severe("Player data could not be saved because it was not loaded!");
+                break;
+            case 2:
+                plugin.getLogger().severe("Player data could not be saved because of an SQL Exception.");
+                break;
+        }
     }
 
     public ArrayList<PlayerInventory> GetInventories() {
@@ -112,10 +162,15 @@ public class PlayerData {
     }
 
     public Integer GetCurrentPinvIndex() {
-        return pinv_index;
+        return playerInvIndex;
     }
 
     public String GetCurrentCustomInv() {
-        return custom_inv;
+        return customInvName;
+    }
+
+    public void Save() {
+        SaveInventories();
+        SavePointers();
     }
 }

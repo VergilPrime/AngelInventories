@@ -9,7 +9,7 @@ plugins {
 apply plugin: 'java'
 
 group = 'com.vergilprime'
-version = '1.0 beta'
+version = '0.1'
 jar.archiveFileName = 'AngelInventories.jar'
 
 sourceCompatibility = '1.8'
@@ -47,7 +47,7 @@ spigot {
     apiVersion = "1.16"
     website = "Angels-Reach.com"
     name = project.description
-    description = "Expand players' Ender Chests and allow instant access via /chest."
+    description = "Swap out players' inventories for preset ones, and give them multiple to toggle through."
     commands {
         Chest {
             description = "Access your Ender Chest anywhere."
