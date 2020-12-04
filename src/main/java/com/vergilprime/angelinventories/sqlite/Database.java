@@ -23,13 +23,11 @@ public abstract class Database {
     AngelInventories plugin;
     Connection connection;
     String dbname;
-    String tablename;
     Boolean debugging;
 
     public Database(AngelInventories plugin) {
         this.plugin = plugin;
         dbname = plugin.config.getString("database");
-        tablename = plugin.config.getString("tablename");
         debugging = plugin.config.getBoolean("debugging");
     }
 
@@ -40,7 +38,7 @@ public abstract class Database {
     public void initialize() {
         connection = getSQLConnection();
         try {
-            PreparedStatement ps = connection.prepareStatement("SELECT * FROM `" + tablename + "` LIMIT 1;");
+            PreparedStatement ps = connection.prepareStatement("SELECT 1;");
             ResultSet rs = ps.executeQuery();
             close(ps, rs);
 
@@ -147,10 +145,12 @@ public abstract class Database {
         ArrayList<PlayerInventory> playerInventories = new ArrayList<>();
         try {
             connection = getSQLConnection();
+            //plugin.getLogger().info("Proof of Life");
             ps = connection.prepareStatement(
-                    "SELECT * FROM 'player_inventories' WHERE uuid = " + uuid.toString() + " " +
-                            "LEFT JOIN 'player_data' " +
-                            "ON `uuid`;");
+                    "SELECT * FROM player_inventories\n" +
+                            "LEFT JOIN player_data\n" +
+                            "ON player_inventories.uuid = player_data.uuid\n" +
+                            "WHERE player_inventories.uuid = '" + uuid + "';");
             rs = ps.executeQuery();
             Integer current_pinv_index = null;
             String current_custom_inv = null;
@@ -164,6 +164,7 @@ public abstract class Database {
                 inventory.setItemInOffHand(InventorySerializer.itemStackArrayFromBase64(rs.getString("inventory_offhand"))[0]);
                 playerInventories.set(rs.getInt("inv_id"), inventory);
             }
+            current_pinv_index = current_pinv_index == null ? 0 : current_pinv_index;
             plugin.loadedPlayers.put(uuid, new PlayerData(plugin, uuid, current_pinv_index, current_custom_inv, playerInventories));
         } catch (SQLException | IOException throwables) {
             throwables.printStackTrace();

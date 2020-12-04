@@ -43,22 +43,35 @@ tasks.withType(JavaCompile) {
 }
 
 spigot {
-    authors = ["VergilPrime"]
+    // The 'name' and 'version' will be set to project.version and project.name,
+    // But we may set those manually.
+    name = 'AngelInventories'
     apiVersion = "1.16"
     website = "Angels-Reach.com"
-    name = project.description
-    description = "Swap out players' inventories for preset ones, and give them multiple to toggle through."
+    version = '0.3'
+    authors = ["VergilPrime"]
     commands {
-        Chest {
-            description = "Access your Ender Chest anywhere."
-            permission = "AngelInventories.ChestCommand"
-            permissionMessage = "You must vote to gain access to your Ender Chest anywhere."
-            usage = "/chest"
+        AngelInventories {
+            aliases = ['ai']
+            description = "Use /AI Save <name> to create custom inventories or /AI Set [player] <name> to replace a player's inventory with a custom one."
+            permission = 'AngelInventories.Admin'
+            usage = '/<command> <save|set> [player] [customInventoryName]'
+        }
+        ToggleInventory {
+            aliases = ['ti']
+            description = "Toggle through your available player inventories."
+            usage = '/<command> [#]'
+        }
+        ResetInventory {
+            description = "Set a player with a Custom Inventory back to their last equipped player inventory"
+            permission = 'AngelInventories.Admin'
+            usage = "/<command> [playername]"
         }
     }
     permissions {
-        "AngelInventories.ChestCommand" {
-            description = "Open your Ender Chest anywhere."
+        "AngelInventories.Admin" {
+            description = 'Allows AI Save and Set commands, and ResetInventory command.'
+            defaults = 'op'
         }
     }
 }

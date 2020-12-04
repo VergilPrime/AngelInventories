@@ -1,18 +1,29 @@
 main: com.vergilprime.angelinventories.AngelInventories
 name: AngelInventories
-version: 0.1
-description: "Swap out players' inventories for preset ones, and give them multiple\
-  \ to toggle through."
+version: 0.3
 website: Angels-Reach.com
 authors:
  - VergilPrime
 api-version: 1.16
 commands:
-  Chest:
-    description: Access your Ender Chest anywhere.
-    usage: /chest
-    permission: AngelInventories.ChestCommand
-    permission-message: You must vote to gain access to your Ender Chest anywhere.
+  AngelInventories:
+    description: "Use /AI Save <name> to create custom inventories or /AI Set [player]\
+      \ <name> to replace a player's inventory with a custom one."
+    usage: "/<command> <save|set> [player] [customInventoryName]"
+    permission: AngelInventories.Admin
+    aliases:
+     - ai
+  ResetInventory:
+    description: Set a player with a Custom Inventory back to their last equipped
+      player inventory
+    usage: "/<command> [playername]"
+    permission: AngelInventories.Admin
+  ToggleInventory:
+    description: Toggle through your available player inventories.
+    usage: "/<command> [#]"
+    aliases:
+     - ti
 permissions:
-  AngelInventories.ChestCommand:
-    description: Open your Ender Chest anywhere.
+  AngelInventories.Admin:
+    description: "Allows AI Save and Set commands, and ResetInventory command."
+    default: op

@@ -55,7 +55,9 @@ public class PlayerData {
     // Override determines whether it works despite the player having a locked custom inventory on.
     public int ToggleInventory(int index, boolean override) {
         if (index >= inventories.size()) {
-            inventories.add((PlayerInventory) Bukkit.createInventory(null, InventoryType.PLAYER));
+            //TODO: Doesn't like to cast this
+            PlayerInventory newInventory = (PlayerInventory) Bukkit.getServer().createInventory(null, InventoryType.PLAYER);
+            inventories.add(newInventory);
         }
         // If current CustomInv is locked and override is false
         if (!override && !customInvName.isEmpty()) {

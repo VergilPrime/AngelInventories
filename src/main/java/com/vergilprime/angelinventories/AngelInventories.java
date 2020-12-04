@@ -20,9 +20,7 @@ public final class AngelInventories extends JavaPlugin {
     public void onEnable() {
         config.addDefault("debugging", false);
         config.addDefault("database", "storage");
-        config.addDefault("tablename", "AngelInventories");
-        config.addDefault("username", "username");
-        config.addDefault("password", "password");
+        config.addDefault("MaxInventories", 5);
         config.options().copyDefaults(true);
         saveConfig();
 

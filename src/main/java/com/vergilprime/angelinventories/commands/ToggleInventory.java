@@ -38,23 +38,19 @@ public class ToggleInventory implements CommandExecutor {
                     index = Integer.parseInt(args[0]) - 1;
                 }
 
-                if (index > 0) {
-                    if (max > 1) {
-                        if (index > max) {
-                            int result = playerData.ToggleInventory(index, false);
-                            switch (result) {
-                                case 0:
-                                    player.sendMessage("Inventory changed to " + (index + 1));
-                                    break;
-                                case 1:
-                                    player.sendMessage("You can't change inventories right now.");
-                                    break;
-                            }
-                        }
-                    } else {
-                        sender.sendMessage("You only have access to one inventory.");
-                        return false;
+                if (max > 1) {
+                    int result = playerData.ToggleInventory(index, false);
+                    switch (result) {
+                        case 0:
+                            player.sendMessage("Inventory changed to " + (index + 1));
+                            break;
+                        case 1:
+                            player.sendMessage("You can't change inventories right now.");
+                            break;
                     }
+                } else {
+                    sender.sendMessage("You only have access to one inventory.");
+                    return false;
                 }
 
 
