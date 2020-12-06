@@ -5,11 +5,17 @@ import org.bukkit.inventory.PlayerInventory;
 import java.util.ArrayList;
 
 public class CustomInventory {
-    private PlayerInventory inventory;
+    private PlayerInventoryLight inventory;
     private CustomInventorySetting setting;
     private ArrayList<Integer> lockedSlots;
 
     public CustomInventory(PlayerInventory inventory, CustomInventorySetting setting, ArrayList<Integer> lockedSlots) {
+        PlayerData.SetInventory(this.inventory, inventory);
+        this.setting = setting;
+        this.lockedSlots = lockedSlots;
+    }
+
+    public CustomInventory(PlayerInventoryLight inventory, CustomInventorySetting setting, ArrayList<Integer> lockedSlots) {
         this.inventory = inventory;
         this.setting = setting;
         this.lockedSlots = lockedSlots;
@@ -19,7 +25,7 @@ public class CustomInventory {
         return setting;
     }
 
-    public PlayerInventory getInventory() {
+    public PlayerInventoryLight getInventory() {
         return inventory;
     }
 }

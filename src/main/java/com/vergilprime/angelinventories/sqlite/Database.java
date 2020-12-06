@@ -1,11 +1,6 @@
 package com.vergilprime.angelinventories.sqlite;
 
-import com.vergilprime.angelinventories.AngelInventories;
-import com.vergilprime.angelinventories.CustomInventory;
-import com.vergilprime.angelinventories.CustomInventorySetting;
-import com.vergilprime.angelinventories.PlayerData;
-import org.bukkit.Bukkit;
-import org.bukkit.event.inventory.InventoryType;
+import com.vergilprime.angelinventories.*;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
@@ -47,8 +42,6 @@ public abstract class Database {
         }
     }
 
-    // These are the methods you can use to get things out of your database. You of course can make new ones to return different things in the database.
-    // This returns the number of people the player killed.
     public void loadCustomInventories() {
         PreparedStatement ps = null;
         ResultSet rs;
@@ -67,7 +60,7 @@ public abstract class Database {
                 String lockedSlotsString = rs.getString("locked_slots");
                 String settingString = rs.getString("setting");
 
-                PlayerInventory inventory = (PlayerInventory) Bukkit.createInventory(null, InventoryType.PLAYER);
+                PlayerInventoryLight inventory = new PlayerInventoryLight();
 
                 inventory.setArmorContents(InventorySerializer.itemStackArrayFromBase64(invstring_armor));
                 inventory.setStorageContents(InventorySerializer.itemStackArrayFromBase64(invstring_storage));
@@ -142,7 +135,7 @@ public abstract class Database {
     public void loadPlayerData(UUID uuid) {
         PreparedStatement ps;
         ResultSet rs;
-        ArrayList<PlayerInventory> playerInventories = new ArrayList<>();
+        ArrayList<PlayerInventoryLight> playerInventories = new ArrayList<>();
         try {
             connection = getSQLConnection();
             //plugin.getLogger().info("Proof of Life");
@@ -157,7 +150,7 @@ public abstract class Database {
             while (rs.next()) {
                 current_pinv_index = current_pinv_index == null ? rs.getInt("current_pinv_index") : current_pinv_index;
                 current_custom_inv = current_custom_inv == null ? rs.getString("current_custom_inv") : current_custom_inv;
-                PlayerInventory inventory = (PlayerInventory) Bukkit.createInventory(null, InventoryType.PLAYER);
+                PlayerInventoryLight inventory = new PlayerInventoryLight();
                 inventory.setArmorContents(InventorySerializer.itemStackArrayFromBase64(rs.getString("inventory_armor")));
                 inventory.setStorageContents(InventorySerializer.itemStackArrayFromBase64(rs.getString("inventory_storage")));
                 inventory.setExtraContents(InventorySerializer.itemStackArrayFromBase64(rs.getString("inventory_extra")));

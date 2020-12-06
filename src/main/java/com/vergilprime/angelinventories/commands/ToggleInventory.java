@@ -25,6 +25,11 @@ public class ToggleInventory implements CommandExecutor {
 
             PlayerData playerData = plugin.loadedPlayers.get(uuid);
 
+            if (playerData == null) {
+                sender.sendMessage("Your player data was not found.");
+                return true;
+            }
+
             int max = playerData.GetMaxInventories();
 
             try {
@@ -50,7 +55,7 @@ public class ToggleInventory implements CommandExecutor {
                     }
                 } else {
                     sender.sendMessage("You only have access to one inventory.");
-                    return false;
+                    return true;
                 }
 
 

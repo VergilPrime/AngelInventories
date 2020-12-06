@@ -12,8 +12,8 @@ import java.util.logging.Level;
 
 
 public class SQLite extends Database {
-    private String dbname;
-    private boolean debugging;
+    private final String dbname;
+    private final boolean debugging;
 
     public SQLite(AngelInventories plugin) {
         super(plugin);

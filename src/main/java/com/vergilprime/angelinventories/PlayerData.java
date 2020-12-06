@@ -2,7 +2,6 @@ package com.vergilprime.angelinventories;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.PlayerInventory;
 
 import java.util.ArrayList;
@@ -12,11 +11,11 @@ public class PlayerData {
     private final AngelInventories plugin;
     private final UUID uuid;
     private final Player player;
-    private final ArrayList<PlayerInventory> inventories;
+    private final ArrayList<PlayerInventoryLight> inventories;
     private int playerInvIndex;
     private String customInvName;
 
-    public PlayerData(AngelInventories plugin, UUID uuid, Integer current_pinv_index, String current_custom_inv, ArrayList<PlayerInventory> playerInventories) {
+    public PlayerData(AngelInventories plugin, UUID uuid, Integer current_pinv_index, String current_custom_inv, ArrayList<PlayerInventoryLight> playerInventories) {
         this.plugin = plugin;
         this.uuid = uuid;
         player = Bukkit.getPlayer(uuid);
@@ -56,17 +55,17 @@ public class PlayerData {
     public int ToggleInventory(int index, boolean override) {
         if (index >= inventories.size()) {
             //TODO: Doesn't like to cast this
-            PlayerInventory newInventory = (PlayerInventory) Bukkit.getServer().createInventory(null, InventoryType.PLAYER);
+            PlayerInventoryLight newInventory = new PlayerInventoryLight();
             inventories.add(newInventory);
         }
         // If current CustomInv is locked and override is false
-        if (!override && !customInvName.isEmpty()) {
+        if (!override && customInvName != null) {
             CustomInventory customInventory = plugin.customInventories.get(customInvName);
             if (customInventory.getSetting() == CustomInventorySetting.locked) {
                 return 1;
             }
         }
-        PlayerInventory newInventory = inventories.get(playerInvIndex);
+        PlayerInventoryLight newInventory = inventories.get(index);
         if (newInventory != null) {
             SaveInventories();
             playerInvIndex = index;
@@ -100,7 +99,7 @@ public class PlayerData {
             }
 
             // New inventory is takeon out of customInventory object
-            PlayerInventory newInventory = customInventory.getInventory();
+            PlayerInventoryLight newInventory = customInventory.getInventory();
 
             // Replace player's inventory with new inventory
             SetInventory(player.getInventory(), newInventory);
@@ -131,7 +130,28 @@ public class PlayerData {
         return max;
     }
 
-    public void SetInventory(PlayerInventory inventory1, PlayerInventory inventory2) {
+    public static void SetInventory(PlayerInventory inventory1, PlayerInventory inventory2) {
+        inventory1.setArmorContents(inventory2.getArmorContents());
+        inventory1.setItemInOffHand(inventory2.getItemInOffHand());
+        inventory1.setExtraContents(inventory2.getExtraContents());
+        inventory1.setStorageContents(inventory2.getStorageContents());
+    }
+
+    public static void SetInventory(PlayerInventoryLight inventory1, PlayerInventory inventory2) {
+        inventory1.setArmorContents(inventory2.getArmorContents());
+        inventory1.setItemInOffHand(inventory2.getItemInOffHand());
+        inventory1.setExtraContents(inventory2.getExtraContents());
+        inventory1.setStorageContents(inventory2.getStorageContents());
+    }
+
+    public static void SetInventory(PlayerInventory inventory1, PlayerInventoryLight inventory2) {
+        inventory1.setArmorContents(inventory2.getArmorContents());
+        inventory1.setItemInOffHand(inventory2.getItemInOffHand());
+        inventory1.setExtraContents(inventory2.getExtraContents());
+        inventory1.setStorageContents(inventory2.getStorageContents());
+    }
+
+    public static void SetInventory(PlayerInventoryLight inventory1, PlayerInventoryLight inventory2) {
         inventory1.setArmorContents(inventory2.getArmorContents());
         inventory1.setItemInOffHand(inventory2.getItemInOffHand());
         inventory1.setExtraContents(inventory2.getExtraContents());
@@ -159,7 +179,7 @@ public class PlayerData {
         }
     }
 
-    public ArrayList<PlayerInventory> GetInventories() {
+    public ArrayList<PlayerInventoryLight> GetInventories() {
         return inventories;
     }
 

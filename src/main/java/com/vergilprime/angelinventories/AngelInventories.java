@@ -31,6 +31,8 @@ public final class AngelInventories extends JavaPlugin {
 
         sqlite = new SQLite(this);
         sqlite.load();
+        
+        sqlite.loadCustomInventories();
 
         // Since nobody should be online at startup this probably will do nothing
         // Leaving it in case someone reloads.
