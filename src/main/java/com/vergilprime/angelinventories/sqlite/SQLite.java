@@ -58,7 +58,6 @@ public class SQLite extends Database {
                             "`inv_id` INTEGER NOT NULL, " +
                             "`inventory_armor` TEXT NOT NULL, " +
                             "`inventory_storage` TEXT NOT NULL, " +
-                            "`inventory_extra` TEXT NOT NULL, " +
                             "`inventory_offhand` TEXT NOT NULL, " +
                             "PRIMARY KEY (`uuid`, `inv_id`));");
             statement.execute(
@@ -66,7 +65,6 @@ public class SQLite extends Database {
                             "`name` TEXT NOT NULL, " +
                             "`inventory_armor` TEXT NOT NULL, " +
                             "`inventory_storage` TEXT NOT NULL, " +
-                            "`inventory_extra` TEXT NOT NULL, " +
                             "`inventory_offhand` TEXT NOT NULL, " +
                             "`setting` TEXT NOT NULL, " +
                             "`locked_slots` TEXT, " +

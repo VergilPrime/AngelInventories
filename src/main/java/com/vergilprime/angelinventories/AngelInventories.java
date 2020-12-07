@@ -13,7 +13,7 @@ import java.util.UUID;
 public final class AngelInventories extends JavaPlugin {
     public SQLite sqlite;
     public HashMap<UUID, PlayerData> loadedPlayers = new HashMap<>();
-    public HashMap<String, CustomInventory> customInventories;
+    public HashMap<String, CustomInventory> customInventories = new HashMap<>();
     public FileConfiguration config = getConfig();
 
     @Override
@@ -31,7 +31,7 @@ public final class AngelInventories extends JavaPlugin {
 
         sqlite = new SQLite(this);
         sqlite.load();
-        
+
         sqlite.loadCustomInventories();
 
         // Since nobody should be online at startup this probably will do nothing
@@ -48,6 +48,5 @@ public final class AngelInventories extends JavaPlugin {
         loadedPlayers.forEach((uuid, playerData) -> {
             playerData.Save();
         });
-        //TODO: Save all loaded players
     }
 }

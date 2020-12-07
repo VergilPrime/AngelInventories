@@ -59,7 +59,7 @@ public class AngelInventoriesCommand implements CommandExecutor {
 
                             break;
                         default:
-                            return false;
+                            return true;
                     }
                     if (player != null) {
                         PlayerData playerData = plugin.loadedPlayers.get(player.getUniqueId());
@@ -71,10 +71,11 @@ public class AngelInventoriesCommand implements CommandExecutor {
                         }
                     } else {
                         sender.sendMessage("No player found.");
-                        return false;
                     }
+                    return true;
+                default:
+                    return false;
             }
-            return true;
         } else {
             sender.sendMessage("Usage: AngelInventories <Save|Set> [Player] <inventoryName>");
             return false;

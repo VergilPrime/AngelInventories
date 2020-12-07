@@ -10,10 +10,10 @@ import org.bukkit.entity.Player;
 
 import java.util.UUID;
 
-public class ResetInventory implements CommandExecutor {
+public class RestoreInventory implements CommandExecutor {
     AngelInventories plugin;
 
-    public ResetInventory(AngelInventories plugin) {
+    public RestoreInventory(AngelInventories plugin) {
         this.plugin = plugin;
     }
 
@@ -34,7 +34,7 @@ public class ResetInventory implements CommandExecutor {
 
         UUID uuid = player.getUniqueId();
         PlayerData playerData = plugin.loadedPlayers.get(uuid);
-        
+
         if (playerData.GetCurrentCustomInv() != null) {
             playerData.ToggleInventory(true);
             sender.sendMessage(player.getDisplayName() + "'s custom inventory swapped to their player inventory.");

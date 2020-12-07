@@ -53,8 +53,7 @@ public class PlayerData {
     // Index determines which inventory to switch to
     // Override determines whether it works despite the player having a locked custom inventory on.
     public int ToggleInventory(int index, boolean override) {
-        if (index >= inventories.size()) {
-            //TODO: Doesn't like to cast this
+        while (index >= inventories.size()) {
             PlayerInventoryLight newInventory = new PlayerInventoryLight();
             inventories.add(newInventory);
         }
@@ -130,31 +129,15 @@ public class PlayerData {
         return max;
     }
 
-    public static void SetInventory(PlayerInventory inventory1, PlayerInventory inventory2) {
-        inventory1.setArmorContents(inventory2.getArmorContents());
-        inventory1.setItemInOffHand(inventory2.getItemInOffHand());
-        inventory1.setExtraContents(inventory2.getExtraContents());
-        inventory1.setStorageContents(inventory2.getStorageContents());
-    }
-
     public static void SetInventory(PlayerInventoryLight inventory1, PlayerInventory inventory2) {
         inventory1.setArmorContents(inventory2.getArmorContents());
         inventory1.setItemInOffHand(inventory2.getItemInOffHand());
-        inventory1.setExtraContents(inventory2.getExtraContents());
         inventory1.setStorageContents(inventory2.getStorageContents());
     }
 
     public static void SetInventory(PlayerInventory inventory1, PlayerInventoryLight inventory2) {
         inventory1.setArmorContents(inventory2.getArmorContents());
         inventory1.setItemInOffHand(inventory2.getItemInOffHand());
-        inventory1.setExtraContents(inventory2.getExtraContents());
-        inventory1.setStorageContents(inventory2.getStorageContents());
-    }
-
-    public static void SetInventory(PlayerInventoryLight inventory1, PlayerInventoryLight inventory2) {
-        inventory1.setArmorContents(inventory2.getArmorContents());
-        inventory1.setItemInOffHand(inventory2.getItemInOffHand());
-        inventory1.setExtraContents(inventory2.getExtraContents());
         inventory1.setStorageContents(inventory2.getStorageContents());
     }
 
@@ -162,7 +145,7 @@ public class PlayerData {
         if (customInvName == null) {
             SetInventory(inventories.get(playerInvIndex), player.getInventory());
         }
-        plugin.sqlite.SavePlayerPointers(uuid);
+        plugin.sqlite.savePlayerInventories(uuid);
     }
 
     public void SavePointers() {

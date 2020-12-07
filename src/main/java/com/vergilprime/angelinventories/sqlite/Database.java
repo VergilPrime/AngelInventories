@@ -10,6 +10,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.UUID;
 import java.util.logging.Level;
 
@@ -55,7 +56,6 @@ public abstract class Database {
                 String name = rs.getString("name");
                 String invstring_armor = rs.getString("inventory_armor");
                 String invstring_storage = rs.getString("inventory_storage");
-                String invstring_extra = rs.getString("inventory_extra");
                 String invstring_offhand = rs.getString("inventory_offhand");
                 String lockedSlotsString = rs.getString("locked_slots");
                 String settingString = rs.getString("setting");
@@ -64,7 +64,6 @@ public abstract class Database {
 
                 inventory.setArmorContents(InventorySerializer.itemStackArrayFromBase64(invstring_armor));
                 inventory.setStorageContents(InventorySerializer.itemStackArrayFromBase64(invstring_storage));
-                inventory.setExtraContents(InventorySerializer.itemStackArrayFromBase64(invstring_extra));
                 inventory.setItemInOffHand(InventorySerializer.itemStackArrayFromBase64(invstring_offhand)[0]);
 
                 String[] stringSlots = lockedSlotsString.split(",");
@@ -147,15 +146,24 @@ public abstract class Database {
             rs = ps.executeQuery();
             Integer current_pinv_index = null;
             String current_custom_inv = null;
+
+            HashMap<Integer, PlayerInventoryLight> invMap = new HashMap<>();
+            Integer lastIndex = 0;
             while (rs.next()) {
                 current_pinv_index = current_pinv_index == null ? rs.getInt("current_pinv_index") : current_pinv_index;
                 current_custom_inv = current_custom_inv == null ? rs.getString("current_custom_inv") : current_custom_inv;
                 PlayerInventoryLight inventory = new PlayerInventoryLight();
                 inventory.setArmorContents(InventorySerializer.itemStackArrayFromBase64(rs.getString("inventory_armor")));
                 inventory.setStorageContents(InventorySerializer.itemStackArrayFromBase64(rs.getString("inventory_storage")));
-                inventory.setExtraContents(InventorySerializer.itemStackArrayFromBase64(rs.getString("inventory_extra")));
                 inventory.setItemInOffHand(InventorySerializer.itemStackArrayFromBase64(rs.getString("inventory_offhand"))[0]);
-                playerInventories.set(rs.getInt("inv_id"), inventory);
+                Integer index = rs.getInt("inv_id");
+                if (index > lastIndex) {
+                    lastIndex = index;
+                }
+                invMap.put(rs.getInt("inv_id"), inventory);
+            }
+            for (int i = 0; i < lastIndex; i++) {
+                playerInventories.add(invMap.get(i));
             }
             current_pinv_index = current_pinv_index == null ? 0 : current_pinv_index;
             plugin.loadedPlayers.put(uuid, new PlayerData(plugin, uuid, current_pinv_index, current_custom_inv, playerInventories));
@@ -170,13 +178,13 @@ public abstract class Database {
             PreparedStatement ps;
             connection = getSQLConnection();
 
-            String sqlQuery = "REPLACE INTO 'player_inventories' (uuid, inv_id, inventory_armor, inventory_storage, inventory_extra, inventory_offhand) ";
+            String sqlQuery = "REPLACE INTO player_inventories (uuid, inv_id, inventory_armor, inventory_storage, inventory_extra, inventory_offhand) VALUES ";
             int i;
             for (i = 0; i < playerData.GetInventories().size(); i++) {
                 if (i != playerData.GetInventories().size() - 1) {
-                    sqlQuery = sqlQuery + "VALUES (?, ?, ?, ?, ?, ?), ";
+                    sqlQuery = sqlQuery + "(?,?,?,?,?), ";
                 } else {
-                    sqlQuery = sqlQuery + "VALUES (?, ?, ?, ?, ?, ?)";
+                    sqlQuery = sqlQuery + "(?,?,?,?,?);";
                 }
             }
             try {
@@ -184,6 +192,11 @@ public abstract class Database {
 
                 int j = 1;
                 for (i = 0; i < playerData.GetInventories().size(); i++) {
+
+                    if (debugging) {
+                        plugin.getLogger().info("Inventory index " + i);
+                        plugin.getLogger().info("Inventory is null: " + (playerData.GetInventories().get(i) == null));
+                    }
 
                     ps.setString(j, uuid.toString());
                     j++;
@@ -199,16 +212,12 @@ public abstract class Database {
                     ps.setString(j, invstring_storage);
                     j++;
 
-                    String invstring_extras = InventorySerializer.itemStackArrayToBase64(playerData.GetInventories().get(i).getExtraContents());
-                    ps.setString(j, invstring_extras);
-                    j++;
-
                     String invstring_offhand = InventorySerializer.itemStackArrayToBase64(new ItemStack[]{playerData.GetInventories().get(i).getItemInOffHand()});
                     ps.setString(j, invstring_offhand);
                     j++;
                 }
 
-                ps.execute();
+                ps.executeUpdate();
                 ps.close();
 
                 return 0;
@@ -229,13 +238,13 @@ public abstract class Database {
                 PreparedStatement ps;
 
                 ps = connection.prepareStatement("REPLACE INTO 'player_data' (`uuid`, `current_pinv_index`, `current_custom_inv`) " +
-                        "VALUES (?, ?, ?)");
+                        "VALUES (?,?,?)");
 
                 ps.setObject(1, uuid);
                 ps.setInt(2, playerData.GetCurrentPinvIndex());
                 ps.setString(3, playerData.GetCurrentCustomInv());
 
-                ps.execute();
+                ps.executeUpdate();
                 ps.close();
 
                 return 0;

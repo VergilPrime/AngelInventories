@@ -5,7 +5,7 @@ import org.bukkit.inventory.PlayerInventory;
 import java.util.ArrayList;
 
 public class CustomInventory {
-    private PlayerInventoryLight inventory;
+    private PlayerInventoryLight inventory = new PlayerInventoryLight();
     private CustomInventorySetting setting;
     private ArrayList<Integer> lockedSlots;
 

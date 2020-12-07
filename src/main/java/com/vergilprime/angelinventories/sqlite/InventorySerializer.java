@@ -41,9 +41,13 @@ public class InventorySerializer {
      * @throws IllegalStateException
      */
     public static String itemStackArrayToBase64(ItemStack[] items) throws IllegalStateException {
+        if (items == null) {
+            return null;
+        }
         try {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            BukkitObjectOutputStream dataOutput = new BukkitObjectOutputStream(outputStream);
+            BukkitObjectOutputStream dataOutput = null;
+            dataOutput = new BukkitObjectOutputStream(outputStream);
 
             // Write the size of the inventory
             dataOutput.writeInt(items.length);
@@ -56,9 +60,10 @@ public class InventorySerializer {
             // Serialize that array
             dataOutput.close();
             return Base64Coder.encodeLines(outputStream.toByteArray());
-        } catch (Exception e) {
-            throw new IllegalStateException("Unable to save item stacks.", e);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+        return null;
     }
 
     /**
