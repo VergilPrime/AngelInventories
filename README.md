@@ -1,2 +1,2 @@
 # AngelInventories
-Expand players' Ender Chests and allow instant access via /chest.
+Let players switch through multiple inventories with /TI and set their inventoires to premade custom inventories with /AI.
