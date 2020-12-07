@@ -54,6 +54,7 @@ spigot {
     name = 'AngelInventories'
     apiVersion = "1.16"
     website = "Angels-Reach.com"
+    description = "Let players switch through multiple inventories with /TI and set their inventoires to premade custom inventories with /AI."
     version = project.version
     authors = ["VergilPrime"]
     commands {
