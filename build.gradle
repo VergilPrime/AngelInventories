@@ -20,8 +20,6 @@ repositories {
 
 dependencies {
     compileOnly spigot('1.16.3')
-    implementation 'com.google.code.gson:gson:2.8.6'
-    implementation 'org.xerial:sqlite-jdbc:3.32.3.2'
 }
 
 tasks.withType(JavaCompile) {

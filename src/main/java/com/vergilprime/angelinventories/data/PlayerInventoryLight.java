@@ -1,11 +1,12 @@
-package com.vergilprime.angelinventories;
+package com.vergilprime.angelinventories.data;
 
 import org.bukkit.inventory.ItemStack;
 
 public class PlayerInventoryLight {
-    ItemStack[] armor;
-    ItemStack[] storage;
-    ItemStack offhand;
+
+    private ItemStack[] armor;
+    private ItemStack[] storage;
+    private ItemStack offhand;
 
     public void setArmorContents(ItemStack[] armor) {
         this.armor = armor;

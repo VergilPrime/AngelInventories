@@ -1,20 +1,27 @@
 package com.vergilprime.angelinventories;
 
+import com.vergilprime.angelinventories.backend.Database;
+import com.vergilprime.angelinventories.backend.SQLite;
+import com.vergilprime.angelinventories.commands.AngelInventoriesCommand;
+import com.vergilprime.angelinventories.commands.ToggleInventory;
+import com.vergilprime.angelinventories.data.CustomInventory;
+import com.vergilprime.angelinventories.data.PlayerData;
 import com.vergilprime.angelinventories.events.PlayerListener;
-import com.vergilprime.angelinventories.sqlite.SQLite;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public final class AngelInventories extends JavaPlugin {
-    public SQLite sqlite;
-    public HashMap<UUID, PlayerData> loadedPlayers = new HashMap<>();
-    public HashMap<String, CustomInventory> customInventories = new HashMap<>();
-    public FileConfiguration config = getConfig();
+
+    private Database database;
+    private Map<UUID, PlayerData> loadedPlayers = new HashMap<>();
+    private Map<String, CustomInventory> customInventories = new HashMap<>();
+    private FileConfiguration config = getConfig();
 
     @Override
     public void onEnable() {
@@ -24,29 +31,40 @@ public final class AngelInventories extends JavaPlugin {
         config.options().copyDefaults(true);
         saveConfig();
 
-        getCommand("ToggleInventory").setExecutor(new com.vergilprime.angelinventories.commands.ToggleInventory(this));
-        getCommand("AngelInventories").setExecutor(new com.vergilprime.angelinventories.commands.AngelInventoriesCommand(this));
+        new ToggleInventory(this);
+        new AngelInventoriesCommand(this);
 
         getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
 
-        sqlite = new SQLite(this);
-        sqlite.load();
+        database = new SQLite(this);
+        database.load();
 
-        sqlite.loadCustomInventories();
+        database.loadCustomInventories();
 
         // Since nobody should be online at startup this probably will do nothing
         // Leaving it in case someone reloads.
-        UUID uuid;
         for (Player player : Bukkit.getOnlinePlayers()) {
-            uuid = player.getUniqueId();
-            sqlite.loadPlayerData(uuid);
+            UUID uuid = player.getUniqueId();
+            database.loadPlayerData(uuid);
         }
     }
 
     @Override
     public void onDisable() {
         loadedPlayers.forEach((uuid, playerData) -> {
-            playerData.Save();
+            playerData.saveAll();
         });
+    }
+
+    public Database getDatabase() {
+        return database;
+    }
+
+    public Map<UUID, PlayerData> getLoadedPlayers() {
+        return loadedPlayers;
+    }
+
+    public Map<String, CustomInventory> getCustomInventories() {
+        return customInventories;
     }
 }
