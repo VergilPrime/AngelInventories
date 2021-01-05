@@ -5,6 +5,7 @@ import com.vergilprime.angelinventories.data.CustomInventory;
 import com.vergilprime.angelinventories.data.CustomInventorySetting;
 import com.vergilprime.angelinventories.data.PlayerData;
 import com.vergilprime.angelinventories.data.PlayerInventoryLight;
+import com.vergilprime.angelinventories.util.BukkitFuture;
 import com.vergilprime.angelinventories.util.InventorySerializer;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
@@ -60,172 +61,185 @@ public abstract class Database {
         }
     }
 
-    public void loadCustomInventories() {
-        synchronized (connection) {
-            try (PreparedStatement ps = connection.prepareStatement(QUERY_LOAD_CUSTOM_INVENTORIES)) {
-                ResultSet rs = ps.executeQuery();
+    public BukkitFuture<Void> loadCustomInventories() {
+        return BukkitFuture.async(() -> {
+            synchronized (connection) {
+                try (PreparedStatement ps = connection.prepareStatement(QUERY_LOAD_CUSTOM_INVENTORIES)) {
+                    ResultSet rs = ps.executeQuery();
 
-                while (rs.next()) {
-                    String name = rs.getString("name");
-                    byte[] inv_armor = rs.getBytes("inventory_armor");
-                    byte[] inv_storage = rs.getBytes("inventory_storage");
-                    byte[] inv_offhand = rs.getBytes("inventory_offhand");
-                    String lockedSlotsString = rs.getString("locked_slots");
-                    String settingString = rs.getString("setting");
+                    while (rs.next()) {
+                        String name = rs.getString("name");
+                        byte[] inv_armor = rs.getBytes("inventory_armor");
+                        byte[] inv_storage = rs.getBytes("inventory_storage");
+                        byte[] inv_offhand = rs.getBytes("inventory_offhand");
+                        String lockedSlotsString = rs.getString("locked_slots");
+                        String settingString = rs.getString("setting");
 
-                    PlayerInventoryLight inventory = new PlayerInventoryLight();
+                        PlayerInventoryLight inventory = new PlayerInventoryLight();
 
-                    inventory.setArmorContents(InventorySerializer.bytesToItems(inv_armor));
-                    inventory.setStorageContents(InventorySerializer.bytesToItems(inv_storage));
-                    inventory.setItemInOffHand(InventorySerializer.bytesToItems(inv_offhand)[0]);
+                        inventory.setArmorContents(InventorySerializer.bytesToItems(inv_armor));
+                        inventory.setStorageContents(InventorySerializer.bytesToItems(inv_storage));
+                        inventory.setItemInOffHand(InventorySerializer.bytesToItems(inv_offhand)[0]);
 
-                    String[] stringSlots = lockedSlotsString.split(",");
-                    ArrayList<Integer> lockedSlots = new ArrayList<>();
-                    for (int i = 0; i < stringSlots.length; i++) {
-                        lockedSlots.set(i, Integer.parseInt(stringSlots[i]));
+                        String[] stringSlots = lockedSlotsString.split(",");
+                        ArrayList<Integer> lockedSlots = new ArrayList<>();
+                        for (int i = 0; i < stringSlots.length; i++) {
+                            lockedSlots.set(i, Integer.parseInt(stringSlots[i]));
+                        }
+
+                        CustomInventorySetting setting = CustomInventorySetting.valueOf(settingString);
+
+                        CustomInventory customInventory = new CustomInventory(inventory, setting, lockedSlots);
+
+                        plugin.getCustomInventories().put(name, customInventory);
+                    }
+                } catch (SQLException | IOException | ClassNotFoundException ex) {
+                    plugin.getLogger().log(Level.SEVERE, "Unable to load custom inventories:", ex);
+                }
+            }
+            return null;
+        });
+    }
+
+    public BukkitFuture<Void> setCustomInventory(String name, PlayerInventory inventory, CustomInventorySetting setting) {
+        return BukkitFuture.async(() -> {
+            synchronized (connection) {
+                CustomInventory customInventory = new CustomInventory(inventory, setting, new ArrayList<>());
+                plugin.getCustomInventories().put(name, customInventory);
+
+
+                try (PreparedStatement ps = connection.prepareStatement(QUERY_SET_CUSTOM_INVENTORY)) {
+
+                    ps.setString(1, name);
+
+                    byte[] inv_armor = InventorySerializer.itemsToBytes(inventory.getArmorContents());
+                    ps.setBytes(2, inv_armor);
+
+                    byte[] inv_storage = InventorySerializer.itemsToBytes(inventory.getStorageContents());
+                    ps.setBytes(3, inv_storage);
+
+                    byte[] inv_extras = InventorySerializer.itemsToBytes(inventory.getExtraContents());
+                    ps.setBytes(4, inv_extras);
+
+                    byte[] inv_offhand = InventorySerializer.itemsToBytes(new ItemStack[]{inventory.getItemInOffHand()});
+                    ps.setBytes(5, inv_offhand);
+
+                    String settingString = setting.name();
+                    ps.setString(6, settingString);
+
+                    ps.execute();
+                } catch (SQLException | IOException e) {
+                    plugin.getLogger().log(Level.SEVERE, "Failed to save custom inventory '" + name + "'", e);
+                }
+            }
+            return null;
+        });
+    }
+
+    public BukkitFuture<Void> loadPlayerData(UUID uuid) {
+        return BukkitFuture.async(() -> {
+            synchronized (connection) {
+                ArrayList<PlayerInventoryLight> playerInventories = new ArrayList<>();
+                try (PreparedStatement ps = connection.prepareStatement(QUERY_LOAD_PLAYER_DATA)) {
+                    ps.setObject(1, uuid);
+                    ResultSet rs = ps.executeQuery();
+                    Integer current_pinv_index = null;
+                    String current_custom_inv = null;
+
+                    HashMap<Integer, PlayerInventoryLight> invMap = new HashMap<>();
+                    Integer lastIndex = 0;
+                    while (rs.next()) {
+                        current_pinv_index = current_pinv_index == null ? rs.getInt("current_pinv_index") : current_pinv_index;
+                        current_custom_inv = current_custom_inv == null ? rs.getString("current_custom_inv") : current_custom_inv;
+                        PlayerInventoryLight inventory = new PlayerInventoryLight();
+                        inventory.setArmorContents(InventorySerializer.bytesToItems(rs.getBytes("inventory_armor")));
+                        inventory.setStorageContents(InventorySerializer.bytesToItems(rs.getBytes("inventory_storage")));
+                        inventory.setItemInOffHand(InventorySerializer.bytesToItems(rs.getBytes("inventory_offhand"))[0]);
+                        Integer index = rs.getInt("inv_id");
+                        if (index > lastIndex) {
+                            lastIndex = index;
+                        }
+                        invMap.put(rs.getInt("inv_id"), inventory);
+                    }
+                    for (int i = 0; i < lastIndex; i++) {
+                        playerInventories.add(invMap.get(i));
+                    }
+                    current_pinv_index = current_pinv_index == null ? 0 : current_pinv_index;
+                    plugin.getLoadedPlayers().put(uuid, new PlayerData(plugin, uuid, current_pinv_index, current_custom_inv, playerInventories));
+                } catch (SQLException | IOException | ClassNotFoundException exception) {
+                    exception.printStackTrace();
+                }
+            }
+            return null;
+        });
+    }
+
+    public BukkitFuture<Boolean> savePlayerInventories(PlayerData playerData) {
+        return BukkitFuture.async(() -> {
+            synchronized (connection) {
+                String sqlQuery = QUERY_SAVE_PLAYER_INVENTORIES_PREFIX;
+                String[] repeat = new String[playerData.getInventories().size()];
+                Arrays.fill(repeat, QUERY_SAVE_PLAYER_INVENTORIES_REPEAT);
+                sqlQuery += String.join(QUERY_SAVE_PLAYER_INVENTORIES_DELIMITER, repeat) + QUERY_SAVE_PLAYER_INVENTORIES_SUFFIX;
+                try (PreparedStatement ps = connection.prepareStatement(sqlQuery)) {
+
+                    int j = 1;
+                    for (int i = 0; i < playerData.getInventories().size(); i++) {
+
+                        if (debugging) {
+                            plugin.getLogger().info("Inventory index " + i);
+                            plugin.getLogger().info("Inventory is null: " + (playerData.getInventories().get(i) == null));
+                        }
+
+                        ps.setString(j, playerData.toString());
+                        j++;
+
+                        ps.setInt(j, i);
+                        j++;
+
+                        byte[] inv_armor = InventorySerializer.itemsToBytes(playerData.getInventories().get(i).getArmorContents());
+                        ps.setBytes(j, inv_armor);
+                        j++;
+
+                        byte[] inv_storage = InventorySerializer.itemsToBytes(playerData.getInventories().get(i).getStorageContents());
+                        ps.setBytes(j, inv_storage);
+                        j++;
+
+                        byte[] inv_offhand = InventorySerializer.itemsToBytes(new ItemStack[]{playerData.getInventories().get(i).getItemInOffHand()});
+                        ps.setBytes(j, inv_offhand);
+                        j++;
                     }
 
-                    CustomInventorySetting setting = CustomInventorySetting.valueOf(settingString);
+                    ps.executeUpdate();
+                    return true;
 
-                    CustomInventory customInventory = new CustomInventory(inventory, setting, lockedSlots);
-
-                    plugin.getCustomInventories().put(name, customInventory);
+                } catch (SQLException | IOException exception) {
+                    exception.printStackTrace();
+                    return false;
                 }
-            } catch (SQLException | IOException | ClassNotFoundException ex) {
-                plugin.getLogger().log(Level.SEVERE, "Unable to load custom inventories:", ex);
             }
-        }
+        });
     }
 
-    public void setCustomInventory(String name, PlayerInventory inventory, CustomInventorySetting setting) {
-        synchronized (connection) {
-            CustomInventory customInventory = new CustomInventory(inventory, setting, new ArrayList<>());
-            plugin.getCustomInventories().put(name, customInventory);
+    public BukkitFuture<Boolean> savePlayerPointers(PlayerData data) {
+        return BukkitFuture.async(() -> {
+            synchronized (connection) {
+                try (PreparedStatement ps = connection.prepareStatement(QUERY_SAVE_PLAYER_POINTERS)) {
 
+                    ps.setObject(1, data.getUUID());
+                    ps.setInt(2, data.getCurrentPlayerInvIndex());
+                    ps.setString(3, data.getCurrentCustomInv());
 
-            try (PreparedStatement ps = connection.prepareStatement(QUERY_SET_CUSTOM_INVENTORY)) {
+                    ps.executeUpdate();
+                    ps.close();
 
-                ps.setString(1, name);
-
-                byte[] inv_armor = InventorySerializer.itemsToBytes(inventory.getArmorContents());
-                ps.setBytes(2, inv_armor);
-
-                byte[] inv_storage = InventorySerializer.itemsToBytes(inventory.getStorageContents());
-                ps.setBytes(3, inv_storage);
-
-                byte[] inv_extras = InventorySerializer.itemsToBytes(inventory.getExtraContents());
-                ps.setBytes(4, inv_extras);
-
-                byte[] inv_offhand = InventorySerializer.itemsToBytes(new ItemStack[]{inventory.getItemInOffHand()});
-                ps.setBytes(5, inv_offhand);
-
-                String settingString = setting.name();
-                ps.setString(6, settingString);
-
-                ps.execute();
-            } catch (SQLException | IOException e) {
-                plugin.getLogger().log(Level.SEVERE, "Failed to save custom inventory '" + name + "'", e);
-            }
-        }
-    }
-
-    public void loadPlayerData(UUID uuid) {
-        synchronized (connection) {
-            ArrayList<PlayerInventoryLight> playerInventories = new ArrayList<>();
-            try (PreparedStatement ps = connection.prepareStatement(QUERY_LOAD_PLAYER_DATA)) {
-                ps.setObject(1, uuid);
-                ResultSet rs = ps.executeQuery();
-                Integer current_pinv_index = null;
-                String current_custom_inv = null;
-
-                HashMap<Integer, PlayerInventoryLight> invMap = new HashMap<>();
-                Integer lastIndex = 0;
-                while (rs.next()) {
-                    current_pinv_index = current_pinv_index == null ? rs.getInt("current_pinv_index") : current_pinv_index;
-                    current_custom_inv = current_custom_inv == null ? rs.getString("current_custom_inv") : current_custom_inv;
-                    PlayerInventoryLight inventory = new PlayerInventoryLight();
-                    inventory.setArmorContents(InventorySerializer.bytesToItems(rs.getBytes("inventory_armor")));
-                    inventory.setStorageContents(InventorySerializer.bytesToItems(rs.getBytes("inventory_storage")));
-                    inventory.setItemInOffHand(InventorySerializer.bytesToItems(rs.getBytes("inventory_offhand"))[0]);
-                    Integer index = rs.getInt("inv_id");
-                    if (index > lastIndex) {
-                        lastIndex = index;
-                    }
-                    invMap.put(rs.getInt("inv_id"), inventory);
+                    return true;
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                    return false;
                 }
-                for (int i = 0; i < lastIndex; i++) {
-                    playerInventories.add(invMap.get(i));
-                }
-                current_pinv_index = current_pinv_index == null ? 0 : current_pinv_index;
-                plugin.getLoadedPlayers().put(uuid, new PlayerData(plugin, uuid, current_pinv_index, current_custom_inv, playerInventories));
-            } catch (SQLException | IOException | ClassNotFoundException exception) {
-                exception.printStackTrace();
             }
-        }
-    }
-
-    public boolean savePlayerInventories(PlayerData playerData) {
-        synchronized (connection) {
-            String sqlQuery = QUERY_SAVE_PLAYER_INVENTORIES_PREFIX;
-            String[] repeat = new String[playerData.getInventories().size()];
-            Arrays.fill(repeat, QUERY_SAVE_PLAYER_INVENTORIES_REPEAT);
-            sqlQuery += String.join(QUERY_SAVE_PLAYER_INVENTORIES_DELIMITER, repeat) + QUERY_SAVE_PLAYER_INVENTORIES_SUFFIX;
-            try (PreparedStatement ps = connection.prepareStatement(sqlQuery)) {
-
-                int j = 1;
-                for (int i = 0; i < playerData.getInventories().size(); i++) {
-
-                    if (debugging) {
-                        plugin.getLogger().info("Inventory index " + i);
-                        plugin.getLogger().info("Inventory is null: " + (playerData.getInventories().get(i) == null));
-                    }
-
-                    ps.setString(j, playerData.toString());
-                    j++;
-
-                    ps.setInt(j, i);
-                    j++;
-
-                    byte[] inv_armor = InventorySerializer.itemsToBytes(playerData.getInventories().get(i).getArmorContents());
-                    ps.setBytes(j, inv_armor);
-                    j++;
-
-                    byte[] inv_storage = InventorySerializer.itemsToBytes(playerData.getInventories().get(i).getStorageContents());
-                    ps.setBytes(j, inv_storage);
-                    j++;
-
-                    byte[] inv_offhand = InventorySerializer.itemsToBytes(new ItemStack[]{playerData.getInventories().get(i).getItemInOffHand()});
-                    ps.setBytes(j, inv_offhand);
-                    j++;
-                }
-
-                ps.executeUpdate();
-                return true;
-
-            } catch (SQLException | IOException exception) {
-                exception.printStackTrace();
-                return false;
-            }
-        }
-    }
-
-    public boolean savePlayerPointers(PlayerData data) {
-        synchronized (connection) {
-            try (PreparedStatement ps = connection.prepareStatement(QUERY_SAVE_PLAYER_POINTERS)) {
-
-                ps.setObject(1, data.getUUID());
-                ps.setInt(2, data.getCurrentPlayerInvIndex());
-                ps.setString(3, data.getCurrentCustomInv());
-
-                ps.executeUpdate();
-                ps.close();
-
-                return true;
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-                return false;
-            }
-        }
+        });
     }
 
 }

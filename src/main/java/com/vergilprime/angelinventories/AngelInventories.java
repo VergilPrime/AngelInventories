@@ -23,8 +23,11 @@ public final class AngelInventories extends JavaPlugin {
     private Map<String, CustomInventory> customInventories = new HashMap<>();
     private FileConfiguration config = getConfig();
 
+    private static AngelInventories instance;
+
     @Override
     public void onEnable() {
+        AngelInventories.instance = this;
         config.addDefault("debugging", false);
         config.addDefault("database", "storage");
         config.addDefault("MaxInventories", 5);
@@ -66,5 +69,9 @@ public final class AngelInventories extends JavaPlugin {
 
     public Map<String, CustomInventory> getCustomInventories() {
         return customInventories;
+    }
+
+    public static AngelInventories getInstance() {
+        return instance;
     }
 }

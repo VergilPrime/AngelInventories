@@ -25,9 +25,7 @@ public abstract class Command implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, org.bukkit.command.Command command, String label, String[] args) {
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            onCommand(sender, label, args);
-        });
+        onCommand(sender, label, args);
         return true;
     }
 
