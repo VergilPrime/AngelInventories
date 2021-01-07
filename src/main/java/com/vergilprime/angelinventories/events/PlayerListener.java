@@ -20,7 +20,7 @@ public class PlayerListener implements Listener {
     @EventHandler
     public void onPlayerJoin(AsyncPlayerPreLoginEvent event) {
         UUID uuid = event.getUniqueId();
-        plugin.getDatabase().loadPlayerData(uuid);
+        plugin.getDatabase().loadPlayerData(uuid, true);
     }
 
     @EventHandler

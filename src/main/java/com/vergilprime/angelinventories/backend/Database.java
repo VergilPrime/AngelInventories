@@ -1,6 +1,7 @@
 package com.vergilprime.angelinventories.backend;
 
 import com.vergilprime.angelinventories.AngelInventories;
+import com.vergilprime.angelinventories.Config;
 import com.vergilprime.angelinventories.data.CustomInventory;
 import com.vergilprime.angelinventories.data.CustomInventorySetting;
 import com.vergilprime.angelinventories.data.PlayerData;
@@ -17,7 +18,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
 
@@ -26,15 +27,14 @@ public abstract class Database {
 
     AngelInventories plugin;
     Connection connection;
-    String dbname;
-    Boolean debugging;
 
     String QUERY_TEST_CONNECTION = "SELECT 1;";
     String QUERY_LOAD_CUSTOM_INVENTORIES = "SELECT * FROM custom_inventories;";
-    String QUERY_SET_CUSTOM_INVENTORY = "REPLACE INTO custom_inventories (name, inventory_armor, inventory_storage, inventory_extra, inventory_offhand, setting) VALUES (?,?,?,?,?,?);";
-    String QUERY_LOAD_PLAYER_DATA = "SELECT * FROM player_inventories ON player_inventories.uuid = player_data.uuid WHERE player_inventories.uuid = ?;";
+    String QUERY_SET_CUSTOM_INVENTORY = "REPLACE INTO custom_inventories (name, inventory_armor, inventory_storage, inventory_offhand, setting) VALUES (?,?,?,?,?);";
+    String QUERY_LOAD_PLAYER_DATA = "SELECT * FROM player_data WHERE uuid = ?;";
+    String QUERY_LOAD_PLAYER_INVENTORIES = "SELECT * FROM player_inventories WHERE uuid = ?;";
 
-    String QUERY_SAVE_PLAYER_INVENTORIES_PREFIX = "REPLACE INTO player_inventories (uuid, inv_id, inventory_armor, inventory_storage, inventory_extra, inventory_offhand) VALUES ";
+    String QUERY_SAVE_PLAYER_INVENTORIES_PREFIX = "REPLACE INTO player_inventories (uuid, inv_id, inventory_armor, inventory_storage, inventory_offhand) VALUES ";
     String QUERY_SAVE_PLAYER_INVENTORIES_REPEAT = "(?,?,?,?,?)";
     String QUERY_SAVE_PLAYER_INVENTORIES_DELIMITER = ", ";
     String QUERY_SAVE_PLAYER_INVENTORIES_SUFFIX = ";";
@@ -43,8 +43,6 @@ public abstract class Database {
 
     public Database(AngelInventories plugin) {
         this.plugin = plugin;
-        dbname = plugin.getConfig().getString("database");
-        debugging = plugin.getConfig().getBoolean("debugging");
     }
 
     public abstract Connection getSQLConnection();
@@ -55,14 +53,14 @@ public abstract class Database {
         connection = getSQLConnection();
         try (PreparedStatement ps = connection.prepareStatement(QUERY_TEST_CONNECTION)) {
             ps.executeQuery();
-            plugin.getLogger().info("Connected to database with backed " + getClass().getName() + " successfully.");
+            plugin.getLogger().info("Connected to database with backed " + getClass().getSimpleName() + " successfully.");
         } catch (SQLException ex) {
             plugin.getLogger().log(Level.SEVERE, "Unable to retrieve connection", ex);
         }
     }
 
-    public BukkitFuture<Void> loadCustomInventories() {
-        return BukkitFuture.async(() -> {
+    public BukkitFuture<Void> loadCustomInventories(boolean instantly) {
+        return new BukkitFuture<>(instantly, instantly, () -> {
             synchronized (connection) {
                 try (PreparedStatement ps = connection.prepareStatement(QUERY_LOAD_CUSTOM_INVENTORIES)) {
                     ResultSet rs = ps.executeQuery();
@@ -97,6 +95,7 @@ public abstract class Database {
                     plugin.getLogger().log(Level.SEVERE, "Unable to load custom inventories:", ex);
                 }
             }
+            plugin.getLogger().info("Loaded " + plugin.getCustomInventories().size() + " custom inventories from database.");
             return null;
         });
     }
@@ -121,7 +120,7 @@ public abstract class Database {
                     byte[] inv_extras = InventorySerializer.itemsToBytes(inventory.getExtraContents());
                     ps.setBytes(4, inv_extras);
 
-                    byte[] inv_offhand = InventorySerializer.itemsToBytes(new ItemStack[]{inventory.getItemInOffHand()});
+                    byte[] inv_offhand = InventorySerializer.itemsToBytes(inventory.getItemInOffHand());
                     ps.setBytes(5, inv_offhand);
 
                     String settingString = setting.name();
@@ -136,35 +135,39 @@ public abstract class Database {
         });
     }
 
-    public BukkitFuture<Void> loadPlayerData(UUID uuid) {
-        return BukkitFuture.async(() -> {
+    public BukkitFuture<Void> loadPlayerData(UUID uuid, boolean wait) {
+        return new BukkitFuture<>(wait, wait, () -> {
             synchronized (connection) {
-                ArrayList<PlayerInventoryLight> playerInventories = new ArrayList<>();
-                try (PreparedStatement ps = connection.prepareStatement(QUERY_LOAD_PLAYER_DATA)) {
-                    ps.setObject(1, uuid);
-                    ResultSet rs = ps.executeQuery();
-                    Integer current_pinv_index = null;
-                    String current_custom_inv = null;
+                try (PreparedStatement psData = connection.prepareStatement(QUERY_LOAD_PLAYER_DATA);
+                     PreparedStatement psInventories = connection.prepareStatement(QUERY_LOAD_PLAYER_INVENTORIES)) {
 
-                    HashMap<Integer, PlayerInventoryLight> invMap = new HashMap<>();
-                    Integer lastIndex = 0;
-                    while (rs.next()) {
-                        current_pinv_index = current_pinv_index == null ? rs.getInt("current_pinv_index") : current_pinv_index;
-                        current_custom_inv = current_custom_inv == null ? rs.getString("current_custom_inv") : current_custom_inv;
-                        PlayerInventoryLight inventory = new PlayerInventoryLight();
-                        inventory.setArmorContents(InventorySerializer.bytesToItems(rs.getBytes("inventory_armor")));
-                        inventory.setStorageContents(InventorySerializer.bytesToItems(rs.getBytes("inventory_storage")));
-                        inventory.setItemInOffHand(InventorySerializer.bytesToItems(rs.getBytes("inventory_offhand"))[0]);
-                        Integer index = rs.getInt("inv_id");
-                        if (index > lastIndex) {
-                            lastIndex = index;
+                    psData.setObject(1, uuid);
+                    ResultSet rsData = psData.executeQuery();
+
+                    if (!rsData.next()) {
+                        // new player with no data
+                        plugin.getLoadedPlayers().put(uuid, new PlayerData(plugin, uuid, 0, null, new ArrayList<>()));
+                        return null;
+                    }
+
+                    int current_pinv_index = rsData.getInt("current_pinv_index");
+                    String current_custom_inv = rsData.getString("current_custom_inv");
+
+
+                    psInventories.setObject(1, uuid);
+                    ResultSet rsInventories = psInventories.executeQuery();
+
+                    List<PlayerInventoryLight> playerInventories = new ArrayList<>();
+                    while (rsInventories.next()) {
+                        int index = rsInventories.getInt("inv_id");
+                        while (index >= playerInventories.size()) {
+                            playerInventories.add(new PlayerInventoryLight());
                         }
-                        invMap.put(rs.getInt("inv_id"), inventory);
+                        PlayerInventoryLight inventory = playerInventories.get(index);
+                        inventory.setArmorContents(InventorySerializer.bytesToItems(rsInventories.getBytes("inventory_armor")));
+                        inventory.setStorageContents(InventorySerializer.bytesToItems(rsInventories.getBytes("inventory_storage")));
+                        inventory.setItemInOffHand(InventorySerializer.bytesToItems(rsInventories.getBytes("inventory_offhand"))[0]);
                     }
-                    for (int i = 0; i < lastIndex; i++) {
-                        playerInventories.add(invMap.get(i));
-                    }
-                    current_pinv_index = current_pinv_index == null ? 0 : current_pinv_index;
                     plugin.getLoadedPlayers().put(uuid, new PlayerData(plugin, uuid, current_pinv_index, current_custom_inv, playerInventories));
                 } catch (SQLException | IOException | ClassNotFoundException exception) {
                     exception.printStackTrace();
@@ -186,12 +189,12 @@ public abstract class Database {
                     int j = 1;
                     for (int i = 0; i < playerData.getInventories().size(); i++) {
 
-                        if (debugging) {
+                        if (Config.getDebugMode()) {
                             plugin.getLogger().info("Inventory index " + i);
                             plugin.getLogger().info("Inventory is null: " + (playerData.getInventories().get(i) == null));
                         }
 
-                        ps.setString(j, playerData.toString());
+                        ps.setString(j, playerData.getUUID().toString());
                         j++;
 
                         ps.setInt(j, i);

@@ -1,5 +1,6 @@
 package com.vergilprime.angelinventories.data;
 
+import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
 public class PlayerInventoryLight {
@@ -7,6 +8,12 @@ public class PlayerInventoryLight {
     private ItemStack[] armor;
     private ItemStack[] storage;
     private ItemStack offhand;
+
+    public PlayerInventoryLight() {
+        armor = generateEmpty(4);
+        storage = generateEmpty(36);
+        offhand = new ItemStack(Material.AIR);
+    }
 
     public void setArmorContents(ItemStack[] armor) {
         this.armor = armor;
@@ -30,5 +37,13 @@ public class PlayerInventoryLight {
 
     public ItemStack getItemInOffHand() {
         return offhand;
+    }
+
+    public static ItemStack[] generateEmpty(int size) {
+        ItemStack[] stacks = new ItemStack[size];
+        for (int i = 0; i < size; i++) {
+            stacks[i] = new ItemStack(Material.AIR);
+        }
+        return stacks;
     }
 }

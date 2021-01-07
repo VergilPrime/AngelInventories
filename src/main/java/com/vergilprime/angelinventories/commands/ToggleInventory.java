@@ -51,7 +51,7 @@ public class ToggleInventory extends Command {
         }
 
         if (playerData.switchToInventory(index, false)) {
-            Chat.error(sender, "Switched inventory to {0}", index + 1);
+            Chat.main(sender, "Switched inventory to {0}", index + 1);
         } else {
             Chat.error(sender, "You can't change inventories right now.");
         }
@@ -70,7 +70,7 @@ public class ToggleInventory extends Command {
             int max = data.getMaxInventories();
             String[] nums = new String[max];
             for (int i = 1; i <= max; i++) {
-                nums[i] = i + "";
+                nums[i - 1] = i + "";
             }
             return Stream.of(nums);
         }

@@ -14,20 +14,28 @@ public class BukkitFuture<V> {
     private V value;
 
     public BukkitFuture(boolean sync, Supplier<V> supplier) {
+        this(sync, false, supplier);
+    }
+
+    public BukkitFuture(boolean sync, boolean instantly, Supplier<V> supplier) {
         Runnable task = () -> {
             value = supplier.get();
-            lock.notifyAll();
+            synchronized (lock) {
+                lock.notifyAll();
+            }
         };
-        if (sync) {
-            Bukkit.getScheduler().runTask(AngelInventories.getInstance(), task);
+        if (instantly && sync == Bukkit.isPrimaryThread()) {
+            task.run();
         } else {
-            Bukkit.getScheduler().runTaskAsynchronously(AngelInventories.getInstance(), task);
+            run(sync, task);
         }
     }
 
     private void wait(Object obj) {
         try {
-            obj.wait();
+            synchronized (obj) {
+                obj.wait();
+            }
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -40,7 +48,7 @@ public class BukkitFuture<V> {
             }
             if (sync) {
                 List<T> next = new ArrayList<>(1);
-                Bukkit.getScheduler().runTask(AngelInventories.getInstance(), () -> {
+                run(true, () -> {
                     next.add(func.apply(value));
                     next.notify();
                 });
@@ -68,5 +76,16 @@ public class BukkitFuture<V> {
         return new BukkitFuture(false, s);
     }
 
+    public static void run(boolean sync, Runnable task) {
+        if (AngelInventories.isDisabling()) {
+            task.run();
+        } else {
+            if (sync) {
+                Bukkit.getScheduler().runTask(AngelInventories.getInstance(), task);
+            } else {
+                Bukkit.getScheduler().runTaskAsynchronously(AngelInventories.getInstance(), task);
+            }
+        }
+    }
 
 }

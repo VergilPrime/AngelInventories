@@ -1,9 +1,7 @@
 package com.vergilprime.angelinventories.backend;
-/*
- * credits:  https://www.spigotmc.org/threads/how-to-sqlite.56847/
- */
 
 import com.vergilprime.angelinventories.AngelInventories;
+import com.vergilprime.angelinventories.Config;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,12 +20,12 @@ public class SQLite extends Database {
 
     @Override
     public Connection getSQLConnection() {
-        File dbFile = new File(plugin.getDataFolder(), dbname + ".db");
+        File dbFile = new File(plugin.getDataFolder(), Config.getDatabase() + ".db");
         if (!dbFile.exists()) {
             try {
                 dbFile.createNewFile();
             } catch (IOException e) {
-                plugin.getLogger().log(Level.SEVERE, "File write error: " + dbname + ".db");
+                plugin.getLogger().log(Level.SEVERE, "File write error: " + Config.getDatabase() + ".db");
             }
         }
         try {
@@ -47,35 +45,35 @@ public class SQLite extends Database {
 
     @Override
     public void load() {
-        synchronized (connection) {
-            try (Statement statement = connection.createStatement()) {
-                statement.execute(
-                        "CREATE TABLE IF NOT EXISTS `player_inventories` (" +
-                                "`uuid` UUID NOT NULL, " +
-                                "`inv_id` INTEGER NOT NULL, " +
-                                "`inventory_armor` BLOB NOT NULL, " +
-                                "`inventory_storage` BLOB NOT NULL, " +
-                                "`inventory_offhand` BLOB NOT NULL, " +
-                                "PRIMARY KEY (`uuid`, `inv_id`));");
-                statement.execute(
-                        "CREATE TABLE IF NOT EXISTS `custom_inventories` (" +
-                                "`name` VARCHAR(64) NOT NULL, " +
-                                "`inventory_armor` BLOB NOT NULL, " +
-                                "`inventory_storage` BLOB NOT NULL, " +
-                                "`inventory_offhand` BLOB NOT NULL, " +
-                                "`setting` VARCHAR(16) NOT NULL, " +
-                                "`locked_slots` TEXT, " +
-                                "PRIMARY KEY (`name`));");
-                statement.execute(
-                        "CREATE TABLE IF NOT EXISTS `player_data` (" +
-                                "`uuid` UUID NOT NULL, " +
-                                "`current_pinv_index` INT NOT NULL, " +
-                                "`current_custom_inv` VARCHAR(64), " +
-                                "PRIMARY KEY (`uuid`));");
-            } catch (SQLException e) {
-                plugin.getLogger().log(Level.SEVERE, "Failed to create SQLite tables!", e);
-            }
+        getSQLConnection();
+        try (Statement statement = connection.createStatement()) {
+            statement.execute(
+                    "CREATE TABLE IF NOT EXISTS `player_inventories` (" +
+                            "`uuid` UUID NOT NULL, " +
+                            "`inv_id` INTEGER NOT NULL, " +
+                            "`inventory_armor` BLOB NOT NULL, " +
+                            "`inventory_storage` BLOB NOT NULL, " +
+                            "`inventory_offhand` BLOB NOT NULL, " +
+                            "PRIMARY KEY (`uuid`, `inv_id`));");
+            statement.execute(
+                    "CREATE TABLE IF NOT EXISTS `custom_inventories` (" +
+                            "`name` VARCHAR(64) NOT NULL, " +
+                            "`inventory_armor` BLOB NOT NULL, " +
+                            "`inventory_storage` BLOB NOT NULL, " +
+                            "`inventory_offhand` BLOB NOT NULL, " +
+                            "`setting` VARCHAR(16) NOT NULL, " +
+                            "`locked_slots` TEXT, " +
+                            "PRIMARY KEY (`name`));");
+            statement.execute(
+                    "CREATE TABLE IF NOT EXISTS `player_data` (" +
+                            "`uuid` UUID NOT NULL, " +
+                            "`current_pinv_index` INT NOT NULL, " +
+                            "`current_custom_inv` VARCHAR(64), " +
+                            "PRIMARY KEY (`uuid`));");
+        } catch (SQLException e) {
+            plugin.getLogger().log(Level.SEVERE, "Failed to create SQLite tables!", e);
         }
+
         initialize();
     }
 }

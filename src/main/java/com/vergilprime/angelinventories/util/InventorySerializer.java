@@ -12,14 +12,15 @@ import java.util.zip.GZIPOutputStream;
 
 public class InventorySerializer {
 
-    public static byte[] itemsToBytes(ItemStack[] items) throws IOException {
+    public static byte[] itemsToBytes(ItemStack... items) throws IOException {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         GZIPOutputStream compression = new GZIPOutputStream(bytes);
         BukkitObjectOutputStream out = new BukkitObjectOutputStream(compression);
-        out.write(items.length);
+        out.writeInt(items.length);
         for (ItemStack item : items) {
             out.writeObject(item);
         }
+        out.close();
         return bytes.toByteArray();
     }
 

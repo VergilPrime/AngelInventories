@@ -9,8 +9,8 @@ import java.util.regex.Pattern;
 
 public class Chat {
 
-    public final static String mainPrefix = ChatColor.AQUA + "AngelInventories> " + ChatColor.GRAY;
-    public final static String errorPrefix = ChatColor.AQUA + "AngelInventories" + ChatColor.DARK_RED + "> " + ChatColor.GRAY;
+    public final static String mainPrefix = ChatColor.AQUA + "AI> " + ChatColor.GRAY;
+    public final static String errorPrefix = ChatColor.AQUA + "AI" + ChatColor.DARK_RED + "> " + ChatColor.GRAY;
     public final static String itemColor = ChatColor.YELLOW + "";
     private final static Pattern itemPattern = Pattern.compile("(\\{[0-9]+\\})");
 

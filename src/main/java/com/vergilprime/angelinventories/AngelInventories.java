@@ -24,15 +24,12 @@ public final class AngelInventories extends JavaPlugin {
     private FileConfiguration config = getConfig();
 
     private static AngelInventories instance;
+    private static boolean disabling;
 
     @Override
     public void onEnable() {
         AngelInventories.instance = this;
-        config.addDefault("debugging", false);
-        config.addDefault("database", "storage");
-        config.addDefault("MaxInventories", 5);
-        config.options().copyDefaults(true);
-        saveConfig();
+        Config.saveDefaults();
 
         new ToggleInventory(this);
         new AngelInventoriesCommand(this);
@@ -42,18 +39,20 @@ public final class AngelInventories extends JavaPlugin {
         database = new SQLite(this);
         database.load();
 
-        database.loadCustomInventories();
+        database.loadCustomInventories(true);
 
-        // Since nobody should be online at startup this probably will do nothing
-        // Leaving it in case someone reloads.
+        // Normally player data is loaded on player join
+        // This is in case of the plugin starting up after a reload
         for (Player player : Bukkit.getOnlinePlayers()) {
             UUID uuid = player.getUniqueId();
-            database.loadPlayerData(uuid);
+            database.loadPlayerData(uuid, true);
         }
+        getLogger().info("Loaded player data for " + Bukkit.getOnlinePlayers().size() + " online players.");
     }
 
     @Override
     public void onDisable() {
+        disabling = true;
         loadedPlayers.forEach((uuid, playerData) -> {
             playerData.saveAll();
         });
@@ -73,5 +72,9 @@ public final class AngelInventories extends JavaPlugin {
 
     public static AngelInventories getInstance() {
         return instance;
+    }
+
+    public static boolean isDisabling() {
+        return disabling;
     }
 }

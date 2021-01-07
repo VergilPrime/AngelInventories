@@ -1,6 +1,7 @@
 package com.vergilprime.angelinventories.data;
 
 import com.vergilprime.angelinventories.AngelInventories;
+import com.vergilprime.angelinventories.Config;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.PlayerInventory;
@@ -90,7 +91,7 @@ public class PlayerData {
     }
 
     public int getMaxInventories() {
-        int max = plugin.getConfig().getInt("MaxInventories");
+        int max = Config.getMaxInventories();
         Player player = Bukkit.getPlayer(uuid);
         while (max > 1 && !player.hasPermission("AngelInventories.Inventories." + max)) {
             max--;
