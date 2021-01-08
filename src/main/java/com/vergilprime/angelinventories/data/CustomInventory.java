@@ -29,4 +29,8 @@ public class CustomInventory {
     public PlayerInventoryLight getInventory() {
         return inventory;
     }
+
+    public List<Integer> getLockedSlots() {
+        return lockedSlots;
+    }
 }

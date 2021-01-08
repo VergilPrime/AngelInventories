@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 
 public abstract class Database {
@@ -30,7 +31,7 @@ public abstract class Database {
 
     String QUERY_TEST_CONNECTION = "SELECT 1;";
     String QUERY_LOAD_CUSTOM_INVENTORIES = "SELECT * FROM custom_inventories;";
-    String QUERY_SET_CUSTOM_INVENTORY = "REPLACE INTO custom_inventories (name, inventory_armor, inventory_storage, inventory_offhand, setting) VALUES (?,?,?,?,?);";
+    String QUERY_SET_CUSTOM_INVENTORY = "REPLACE INTO custom_inventories (name, inventory_armor, inventory_storage, inventory_offhand, setting, locked_slots) VALUES (?,?,?,?,?,?);";
     String QUERY_LOAD_PLAYER_DATA = "SELECT * FROM player_data WHERE uuid = ?;";
     String QUERY_LOAD_PLAYER_INVENTORIES = "SELECT * FROM player_inventories WHERE uuid = ?;";
 
@@ -80,9 +81,11 @@ public abstract class Database {
                         inventory.setItemInOffHand(InventorySerializer.bytesToItems(inv_offhand)[0]);
 
                         String[] stringSlots = lockedSlotsString.split(",");
-                        ArrayList<Integer> lockedSlots = new ArrayList<>();
-                        for (int i = 0; i < stringSlots.length; i++) {
-                            lockedSlots.set(i, Integer.parseInt(stringSlots[i]));
+                        List<Integer> lockedSlots = new ArrayList<>();
+                        for (String n : stringSlots) {
+                            if (n.length() > 0) {
+                                lockedSlots.add(Integer.parseInt(n));
+                            }
                         }
 
                         CustomInventorySetting setting = CustomInventorySetting.valueOf(settingString);
@@ -117,14 +120,15 @@ public abstract class Database {
                     byte[] inv_storage = InventorySerializer.itemsToBytes(inventory.getStorageContents());
                     ps.setBytes(3, inv_storage);
 
-                    byte[] inv_extras = InventorySerializer.itemsToBytes(inventory.getExtraContents());
-                    ps.setBytes(4, inv_extras);
-
                     byte[] inv_offhand = InventorySerializer.itemsToBytes(inventory.getItemInOffHand());
-                    ps.setBytes(5, inv_offhand);
+                    ps.setBytes(4, inv_offhand);
 
                     String settingString = setting.name();
-                    ps.setString(6, settingString);
+                    ps.setString(5, settingString);
+
+                    String lockedSlots = customInventory.getLockedSlots().stream().map(i -> Integer.toString(i))
+                            .collect(Collectors.joining(","));
+                    ps.setString(6, lockedSlots);
 
                     ps.execute();
                 } catch (SQLException | IOException e) {

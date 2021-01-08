@@ -17,6 +17,7 @@ public class Chat {
     public final static String gold = ChatColor.GOLD + "";
 
     public static String format(String prefix, String msg, Object... objs) {
+        msg = msg.replace("'", "''");
         msg = prefix + String.join("\n" + prefix, msg.split("\n"));
         Matcher matcher = itemPattern.matcher(msg);
         StringBuffer buffer = new StringBuffer();

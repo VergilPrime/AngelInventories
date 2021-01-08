@@ -3,6 +3,7 @@ package com.vergilprime.angelinventories;
 import com.vergilprime.angelinventories.backend.Database;
 import com.vergilprime.angelinventories.backend.SQLite;
 import com.vergilprime.angelinventories.commands.AngelInventoriesCommand;
+import com.vergilprime.angelinventories.commands.RestoreInventory;
 import com.vergilprime.angelinventories.commands.ToggleInventory;
 import com.vergilprime.angelinventories.data.CustomInventory;
 import com.vergilprime.angelinventories.data.PlayerData;
@@ -33,6 +34,7 @@ public final class AngelInventories extends JavaPlugin {
 
         new ToggleInventory(this);
         new AngelInventoriesCommand(this);
+        new RestoreInventory(this);
 
         getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
 

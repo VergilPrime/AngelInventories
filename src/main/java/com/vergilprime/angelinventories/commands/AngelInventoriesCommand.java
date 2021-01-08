@@ -33,7 +33,7 @@ public class AngelInventoriesCommand extends Command {
 
 
         } else if (args[0].equalsIgnoreCase("set")) {
-            if (args.length <= 2) {
+            if (args.length < 2) {
                 Chat.error(sender, "Please use {0}", "set <inventory-name> [player]");
                 return;
             }
@@ -49,20 +49,20 @@ public class AngelInventoriesCommand extends Command {
                 }
             }
             if (target == null) {
-                Chat.error(sender, "Please use {0}", "set <inventory-name> [player]");
+                Chat.error(sender, "Please use {0}", "set <inventory-name> <player>");
                 return;
             }
             PlayerData data = plugin.getLoadedPlayers().get(target.getUniqueId());
-            String name = args[0];
+            String name = args[1];
             if (data.setCustomInventory(name)) {
                 Chat.main(sender, "Set {0}'s inventory to {1}", target.getName(), name);
             } else {
-                Chat.main(sender, "Unknown custom inventory {0}", name);
+                Chat.error(sender, "Unknown custom inventory {0}", name);
             }
 
 
         } else if (args[0].equalsIgnoreCase("save")) {
-            if (args.length <= 2) {
+            if (args.length < 2) {
                 Chat.error(sender, "Please use {0}", "save <inventory-name> [setting]");
                 return;
             }
@@ -102,9 +102,9 @@ public class AngelInventoriesCommand extends Command {
         if (args.length == 3) {
             switch (args[0].toLowerCase()) {
                 case "set":
-                    return Stream.of(CustomInventorySetting.values()).map(Enum::name);
-                case "save":
                     return Tab.getPlayerList();
+                case "save":
+                    return Stream.of(CustomInventorySetting.values()).map(Enum::name);
                 default:
                     return Stream.empty();
             }

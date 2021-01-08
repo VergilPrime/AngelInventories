@@ -42,7 +42,7 @@ public class RestoreInventory extends Command {
             data.restore();
             Chat.main(sender, "Restored {0}'s inventory back from custom.", target.getName());
         } else {
-            Chat.error(sender, "{0} does not have an active custom inventory.");
+            Chat.error(sender, "{0} does not have an active custom inventory.", target.getName());
         }
     }
 

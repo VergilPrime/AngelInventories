@@ -51,7 +51,10 @@ public class PlayerData {
         }
         PlayerInventoryLight newInventory = inventories.get(index);
         if (newInventory != null) {
-            saveInventories();
+            if (customInvName == null) {
+                saveInventories();
+            }
+            customInvName = null;
             playerInvIndex = index;
             setInventory(Bukkit.getPlayer(uuid).getInventory(), newInventory);
             savePointers();
