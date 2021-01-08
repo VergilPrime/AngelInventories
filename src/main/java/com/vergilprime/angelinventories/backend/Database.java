@@ -9,7 +9,6 @@ import com.vergilprime.angelinventories.data.PlayerInventoryLight;
 import com.vergilprime.angelinventories.util.BukkitFuture;
 import com.vergilprime.angelinventories.util.InventorySerializer;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.PlayerInventory;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -92,7 +91,7 @@ public abstract class Database {
 
                         CustomInventory customInventory = new CustomInventory(inventory, setting, lockedSlots);
 
-                        plugin.getCustomInventories().put(name, customInventory);
+                        plugin.setCustomInventory(name, customInventory);
                     }
                 } catch (SQLException | IOException | ClassNotFoundException ex) {
                     plugin.getLogger().log(Level.SEVERE, "Unable to load custom inventories:", ex);
@@ -103,16 +102,16 @@ public abstract class Database {
         });
     }
 
-    public BukkitFuture<Void> setCustomInventory(String name, PlayerInventory inventory, CustomInventorySetting setting) {
+    public BukkitFuture<Void> setCustomInventory(String name, PlayerInventoryLight inventory, CustomInventorySetting setting) {
         return BukkitFuture.async(() -> {
             synchronized (connection) {
                 CustomInventory customInventory = new CustomInventory(inventory, setting, new ArrayList<>());
-                plugin.getCustomInventories().put(name, customInventory);
+                plugin.setCustomInventory(name, customInventory);
 
 
                 try (PreparedStatement ps = connection.prepareStatement(QUERY_SET_CUSTOM_INVENTORY)) {
 
-                    ps.setString(1, name);
+                    ps.setString(1, name.toLowerCase());
 
                     byte[] inv_armor = InventorySerializer.itemsToBytes(inventory.getArmorContents());
                     ps.setBytes(2, inv_armor);

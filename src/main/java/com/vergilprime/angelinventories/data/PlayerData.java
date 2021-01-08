@@ -40,7 +40,7 @@ public class PlayerData {
     public boolean switchToInventory(int index, boolean override) {
         // If current CustomInv is locked and override is false
         if (!override && customInvName != null) {
-            CustomInventory customInventory = plugin.getCustomInventories().get(customInvName);
+            CustomInventory customInventory = plugin.getCustomInventory(customInvName);
             if (customInventory.getSetting() == CustomInventorySetting.locked) {
                 return false;
             }
@@ -70,7 +70,7 @@ public class PlayerData {
      */
     public boolean setCustomInventory(String name) {
         // Look for custom inventory at that name
-        CustomInventory customInventory = plugin.getCustomInventories().get(name);
+        CustomInventory customInventory = plugin.getCustomInventory(name);
 
         if (customInventory == null) {
             return false;

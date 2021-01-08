@@ -2,6 +2,7 @@ package com.vergilprime.angelinventories.data;
 
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
 
 public class PlayerInventoryLight {
 
@@ -13,6 +14,10 @@ public class PlayerInventoryLight {
         armor = generateEmpty(4);
         storage = generateEmpty(36);
         offhand = new ItemStack(Material.AIR);
+    }
+
+    public PlayerInventoryLight(PlayerInventory inventory) {
+        PlayerData.setInventory(this, inventory);
     }
 
     public void setArmorContents(ItemStack[] armor) {

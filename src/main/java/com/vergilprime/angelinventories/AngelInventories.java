@@ -13,8 +13,10 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 public final class AngelInventories extends JavaPlugin {
@@ -68,8 +70,16 @@ public final class AngelInventories extends JavaPlugin {
         return loadedPlayers;
     }
 
-    public Map<String, CustomInventory> getCustomInventories() {
-        return customInventories;
+    public CustomInventory getCustomInventory(String name) {
+        return customInventories.get(name.toLowerCase());
+    }
+
+    public void setCustomInventory(String name, CustomInventory inv) {
+        customInventories.put(name, inv);
+    }
+
+    public Set<String> getCustomInventories() {
+        return Collections.unmodifiableSet(customInventories.keySet());
     }
 
     public static AngelInventories getInstance() {
