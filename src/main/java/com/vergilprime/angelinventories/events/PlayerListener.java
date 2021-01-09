@@ -1,6 +1,7 @@
 package com.vergilprime.angelinventories.events;
 
 import com.vergilprime.angelinventories.AngelInventories;
+import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -15,6 +16,7 @@ public class PlayerListener implements Listener {
 
     public PlayerListener(AngelInventories plugin) {
         this.plugin = plugin;
+        Bukkit.getPluginManager().registerEvents(this, plugin);
     }
 
     @EventHandler

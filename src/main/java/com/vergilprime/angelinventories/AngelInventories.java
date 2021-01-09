@@ -7,6 +7,7 @@ import com.vergilprime.angelinventories.commands.RestoreInventory;
 import com.vergilprime.angelinventories.commands.ToggleInventory;
 import com.vergilprime.angelinventories.data.CustomInventory;
 import com.vergilprime.angelinventories.data.PlayerData;
+import com.vergilprime.angelinventories.events.LockListener;
 import com.vergilprime.angelinventories.events.PlayerListener;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -38,7 +39,8 @@ public final class AngelInventories extends JavaPlugin {
         new AngelInventoriesCommand(this);
         new RestoreInventory(this);
 
-        getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
+        new PlayerListener(this);
+        new LockListener(this);
 
         database = new SQLite(this);
         database.load();
