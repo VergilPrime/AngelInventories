@@ -59,8 +59,8 @@ public abstract class Database {
         }
     }
 
-    public BukkitFuture<Void> loadCustomInventories(boolean instantly) {
-        return new BukkitFuture<>(instantly, instantly, () -> {
+    public BukkitFuture<Void> loadCustomInventories(boolean sync) {
+        return new BukkitFuture<>(sync, sync, () -> {
             synchronized (connection) {
                 try (PreparedStatement ps = connection.prepareStatement(QUERY_LOAD_CUSTOM_INVENTORIES)) {
                     ResultSet rs = ps.executeQuery();
@@ -89,7 +89,7 @@ public abstract class Database {
 
                         CustomInventorySetting setting = CustomInventorySetting.valueOf(settingString);
 
-                        CustomInventory customInventory = new CustomInventory(inventory, setting, lockedSlots);
+                        CustomInventory customInventory = new CustomInventory(name, inventory, setting, lockedSlots);
 
                         plugin.setCustomInventory(name, customInventory);
                     }
@@ -102,16 +102,14 @@ public abstract class Database {
         });
     }
 
-    public BukkitFuture<Void> setCustomInventory(String name, PlayerInventoryLight inventory, CustomInventorySetting setting) {
+    public BukkitFuture<Void> saveCustomInventory(CustomInventory customInventory) {
         return BukkitFuture.async(() -> {
             synchronized (connection) {
-                CustomInventory customInventory = new CustomInventory(inventory, setting, new ArrayList<>());
-                plugin.setCustomInventory(name, customInventory);
-
-
                 try (PreparedStatement ps = connection.prepareStatement(QUERY_SET_CUSTOM_INVENTORY)) {
 
-                    ps.setString(1, name.toLowerCase());
+                    ps.setString(1, customInventory.getName());
+
+                    PlayerInventoryLight inventory = customInventory.getInventory();
 
                     byte[] inv_armor = InventorySerializer.itemsToBytes(inventory.getArmorContents());
                     ps.setBytes(2, inv_armor);
@@ -122,16 +120,17 @@ public abstract class Database {
                     byte[] inv_offhand = InventorySerializer.itemsToBytes(inventory.getItemInOffHand());
                     ps.setBytes(4, inv_offhand);
 
-                    String settingString = setting.name();
+                    String settingString = customInventory.getSetting().name();
                     ps.setString(5, settingString);
 
-                    String lockedSlots = customInventory.getLockedSlots().stream().map(i -> Integer.toString(i))
+                    String lockedSlots = customInventory.getLockedSlots().stream()
+                            .map(i -> Integer.toString(i))
                             .collect(Collectors.joining(","));
                     ps.setString(6, lockedSlots);
 
                     ps.execute();
                 } catch (SQLException | IOException e) {
-                    plugin.getLogger().log(Level.SEVERE, "Failed to save custom inventory '" + name + "'", e);
+                    plugin.getLogger().log(Level.SEVERE, "Failed to save custom inventory '" + customInventory.getName() + "'", e);
                 }
             }
             return null;

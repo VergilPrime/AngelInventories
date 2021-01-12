@@ -17,7 +17,7 @@ public class PlayerInventoryLight {
     }
 
     public PlayerInventoryLight(PlayerInventory inventory) {
-        PlayerData.setInventory(this, inventory);
+        loadFrom(inventory);
     }
 
     public void setArmorContents(ItemStack[] armor) {
@@ -44,6 +44,18 @@ public class PlayerInventoryLight {
         return offhand;
     }
 
+    public void loadFrom(PlayerInventory player) {
+        setArmorContents(player.getArmorContents());
+        setItemInOffHand(player.getItemInOffHand());
+        setStorageContents(player.getStorageContents());
+    }
+
+    public void apply(PlayerInventory player) {
+        player.setArmorContents(getArmorContents());
+        player.setItemInOffHand(getItemInOffHand());
+        player.setStorageContents(getStorageContents());
+    }
+
     public static ItemStack[] generateEmpty(int size) {
         ItemStack[] stacks = new ItemStack[size];
         for (int i = 0; i < size; i++) {
@@ -51,4 +63,5 @@ public class PlayerInventoryLight {
         }
         return stacks;
     }
+
 }

@@ -4,7 +4,6 @@ import com.vergilprime.angelinventories.AngelInventories;
 import com.vergilprime.angelinventories.Config;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.PlayerInventory;
 
 import java.util.List;
 import java.util.UUID;
@@ -56,7 +55,7 @@ public class PlayerData {
             }
             customInvName = null;
             playerInvIndex = index;
-            setInventory(Bukkit.getPlayer(uuid).getInventory(), newInventory);
+            newInventory.apply(Bukkit.getPlayer(uuid).getInventory());
             savePointers();
             return true;
         } else {
@@ -81,11 +80,11 @@ public class PlayerData {
         boolean replace = customInventory.getSetting() == CustomInventorySetting.replace;
 
         if (replace) {
-            setInventory(Bukkit.getPlayer(uuid).getInventory(), customInventory.getInventory());
+            customInventory.getInventory().apply(Bukkit.getPlayer(uuid).getInventory());
             saveInventories();
         } else {
             saveInventories();
-            setInventory(Bukkit.getPlayer(uuid).getInventory(), customInventory.getInventory());
+            customInventory.getInventory().apply(Bukkit.getPlayer(uuid).getInventory());
             customInvName = name;
             savePointers();
         }
@@ -103,21 +102,9 @@ public class PlayerData {
         return Math.max(max, 1);
     }
 
-    public static void setInventory(PlayerInventoryLight light, PlayerInventory bukkit) {
-        light.setArmorContents(bukkit.getArmorContents());
-        light.setItemInOffHand(bukkit.getItemInOffHand());
-        light.setStorageContents(bukkit.getStorageContents());
-    }
-
-    public static void setInventory(PlayerInventory bukkit, PlayerInventoryLight light) {
-        bukkit.setArmorContents(light.getArmorContents());
-        bukkit.setItemInOffHand(light.getItemInOffHand());
-        bukkit.setStorageContents(light.getStorageContents());
-    }
-
     public void saveInventories() {
         if (customInvName == null) {
-            setInventory(inventories.get(playerInvIndex), Bukkit.getPlayer(uuid).getInventory());
+            inventories.get(playerInvIndex).loadFrom(Bukkit.getPlayer(uuid).getInventory());
         }
         plugin.getDatabase().savePlayerInventories(this);
     }
