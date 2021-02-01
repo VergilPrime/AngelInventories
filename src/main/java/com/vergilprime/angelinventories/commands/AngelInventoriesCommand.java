@@ -80,7 +80,7 @@ public class AngelInventoriesCommand extends Command {
             CustomInventory inv = AngelInventories.getInstance().getCustomInventory(name);
             boolean create = inv == null;
             if (create) {
-                inv = new CustomInventory(name, null, null, new ArrayList<>());
+                inv = new CustomInventory(name, null, CustomInventorySetting.normal, new ArrayList<>());
             }
             inv.setInventory(new PlayerInventoryLight(((Player) sender).getInventory()));
             if (args.length > 2) {
@@ -91,6 +91,7 @@ public class AngelInventoriesCommand extends Command {
                     return;
                 }
             }
+            inv.save();
             if (create) {
                 Chat.main(sender, "Saved new custom inventory {0}", name);
             } else {
