@@ -1,8 +1,0 @@
-name: AngelInventories
-version: @version@
-main: com.vergilprime.AngelInventories.AngelInventories
-api-version: 1.16
-prefix: AC
-authors: [ VergilPrime ]
-description: Swap out players' inventories for preset ones, and give them multiple to toggle through.
-website: Angels-Reach.com

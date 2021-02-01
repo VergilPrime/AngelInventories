@@ -1,10 +1,9 @@
 
-# Created by https://www.toptal.com/developers/gitignore/api/intellij+all,eclipse,windows,linux,macos,java,vim
-# Edit at https://www.toptal.com/developers/gitignore?templates=intellij+all,eclipse,windows,linux,macos,java,vim
+# Created by https://www.toptal.com/developers/gitignore/api/vim,java,linux,macos,eclipse,windows,intellij+all,gradle
+# Edit at https://www.toptal.com/developers/gitignore?templates=vim,java,linux,macos,eclipse,windows,intellij+all,gradle
 
 ### Eclipse ###
 .metadata
-debug/
 bin/
 tmp/
 *.tmp
@@ -273,4 +272,23 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
-# End of https://www.toptal.com/developers/gitignore/api/intellij+all,eclipse,windows,linux,macos,java,vim
+### Gradle ###
+.gradle
+build/
+
+# Ignore Gradle GUI config
+gradle-app.setting
+
+# Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
+!gradle-wrapper.jar
+
+# Cache of project
+.gradletasknamecache
+
+# # Work around https://youtrack.jetbrains.com/issue/IDEA-116898
+# gradle/wrapper/gradle-wrapper.properties
+
+### Gradle Patch ###
+**/build/
+
+# End of https://www.toptal.com/developers/gitignore/api/vim,java,linux,macos,eclipse,windows,intellij+all,gradle

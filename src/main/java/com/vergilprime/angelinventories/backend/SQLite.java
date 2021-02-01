@@ -1,6 +1,7 @@
-package com.vergilprime.angelinventories.sqlite;
+package com.vergilprime.angelinventories.backend;
 
 import com.vergilprime.angelinventories.AngelInventories;
+import com.vergilprime.angelinventories.Config;
 
 import java.io.File;
 import java.io.IOException;
@@ -12,24 +13,19 @@ import java.util.logging.Level;
 
 
 public class SQLite extends Database {
-    private final String dbname;
-    private final boolean debugging;
 
     public SQLite(AngelInventories plugin) {
         super(plugin);
-        dbname = plugin.config.getString("database");
-        debugging = plugin.config.getBoolean("debugging");
     }
 
-    // SQL creation stuff, You can leave the blow stuff untouched.
     @Override
     public Connection getSQLConnection() {
-        File dataFolder = new File(plugin.getDataFolder(), dbname + ".db");
-        if (!dataFolder.exists()) {
+        File dbFile = new File(plugin.getDataFolder(), Config.getDatabase() + ".db");
+        if (!dbFile.exists()) {
             try {
-                dataFolder.createNewFile();
+                dbFile.createNewFile();
             } catch (IOException e) {
-                plugin.getLogger().log(Level.SEVERE, "File write error: " + dbname + ".db");
+                plugin.getLogger().log(Level.SEVERE, "File write error: " + Config.getDatabase() + ".db");
             }
         }
         try {
@@ -37,7 +33,7 @@ public class SQLite extends Database {
                 return connection;
             }
             Class.forName("org.sqlite.JDBC");
-            connection = DriverManager.getConnection("jdbc:sqlite:" + dataFolder);
+            connection = DriverManager.getConnection("jdbc:sqlite:" + dbFile);
             return connection;
         } catch (SQLException ex) {
             plugin.getLogger().log(Level.SEVERE, "SQLite exception on initialize", ex);
@@ -49,38 +45,35 @@ public class SQLite extends Database {
 
     @Override
     public void load() {
-        connection = getSQLConnection();
-        try {
-            Statement statement = connection.createStatement();
+        getSQLConnection();
+        try (Statement statement = connection.createStatement()) {
             statement.execute(
                     "CREATE TABLE IF NOT EXISTS `player_inventories` (" +
                             "`uuid` UUID NOT NULL, " +
                             "`inv_id` INTEGER NOT NULL, " +
-                            "`inventory_armor` TEXT NOT NULL, " +
-                            "`inventory_storage` TEXT NOT NULL, " +
-                            "`inventory_offhand` TEXT NOT NULL, " +
+                            "`inventory_armor` BLOB NOT NULL, " +
+                            "`inventory_storage` BLOB NOT NULL, " +
+                            "`inventory_offhand` BLOB NOT NULL, " +
                             "PRIMARY KEY (`uuid`, `inv_id`));");
             statement.execute(
                     "CREATE TABLE IF NOT EXISTS `custom_inventories` (" +
-                            "`name` TEXT NOT NULL, " +
-                            "`inventory_armor` TEXT NOT NULL, " +
-                            "`inventory_storage` TEXT NOT NULL, " +
-                            "`inventory_offhand` TEXT NOT NULL, " +
-                            "`setting` TEXT NOT NULL, " +
+                            "`name` VARCHAR(64) NOT NULL, " +
+                            "`inventory_armor` BLOB NOT NULL, " +
+                            "`inventory_storage` BLOB NOT NULL, " +
+                            "`inventory_offhand` BLOB NOT NULL, " +
+                            "`setting` VARCHAR(16) NOT NULL, " +
                             "`locked_slots` TEXT, " +
                             "PRIMARY KEY (`name`));");
             statement.execute(
                     "CREATE TABLE IF NOT EXISTS `player_data` (" +
                             "`uuid` UUID NOT NULL, " +
                             "`current_pinv_index` INT NOT NULL, " +
-                            "`current_custom_inv` TEXT, " +
+                            "`current_custom_inv` VARCHAR(64), " +
                             "PRIMARY KEY (`uuid`));");
-            statement.close();
         } catch (SQLException e) {
-            plugin.getLogger().log(Level.SEVERE, "SQLite tables failed to create, check SQLite.java 59-63", e);
+            plugin.getLogger().log(Level.SEVERE, "Failed to create SQLite tables!", e);
         }
+
         initialize();
     }
 }
-
-// Credit: https://www.spigotmc.org/threads/how-to-sqlite.56847/

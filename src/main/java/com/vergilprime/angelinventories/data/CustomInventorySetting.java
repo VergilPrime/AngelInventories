@@ -1,5 +1,7 @@
-package com.vergilprime.angelinventories;
+package com.vergilprime.angelinventories.data;
 
 public enum CustomInventorySetting {
+
     normal, locked, replace
+
 }

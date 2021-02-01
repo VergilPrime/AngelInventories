@@ -1,72 +1,79 @@
 package com.vergilprime.angelinventories.commands;
 
 import com.vergilprime.angelinventories.AngelInventories;
-import com.vergilprime.angelinventories.PlayerData;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
+import com.vergilprime.angelinventories.data.PlayerData;
+import com.vergilprime.angelinventories.util.Chat;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import java.util.UUID;
+import java.util.stream.Stream;
 
-public class ToggleInventory implements CommandExecutor {
-    AngelInventories plugin;
+public class ToggleInventory extends Command {
 
     public ToggleInventory(AngelInventories plugin) {
-        this.plugin = plugin;
+        super("ToggleInventory", plugin);
+    }
+
+    /**
+     * /ti [inventory index]
+     */
+    @Override
+    public void onCommand(CommandSender sender, String label, String[] args) {
+        if (!(sender instanceof Player)) {
+            Chat.error(sender, "Only players can use this command.");
+            return;
+        }
+
+        Player player = (Player) sender;
+        UUID uuid = player.getUniqueId();
+        PlayerData playerData = plugin.getLoadedPlayers().get(uuid);
+
+        int max = playerData.getMaxInventories();
+
+        if (max <= 1) {
+            Chat.error(sender, "You only have access to {0} inventory.", 1);
+            return;
+        }
+
+        int index = (playerData.getCurrentPlayerInvIndex() + 1) % max;
+        if (args.length > 0) {
+            try {
+                index = Integer.parseInt(args[0]) - 1;
+                if (index < 0 || index >= max) {
+                    Chat.error(sender, "Specify an inventory between {0} and {1}.", 1, max);
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                Chat.error(sender, "Specify an inventory between {0} and {1}.", 1, max);
+                return;
+            }
+        }
+
+        if (playerData.switchToInventory(index, false)) {
+            Chat.main(sender, "Switched inventory to {0}", index + 1);
+        } else {
+            Chat.error(sender, "You can't change inventories right now.");
+        }
+
+        return;
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (sender instanceof Player) {
-            Player player = (Player) sender;
-
-            UUID uuid = player.getUniqueId();
-
-            PlayerData playerData = plugin.loadedPlayers.get(uuid);
-
-            if (playerData == null) {
-                sender.sendMessage("Your player data was not found.");
-                return true;
-            }
-
-            int max = playerData.GetMaxInventories();
-
-            try {
-                int index = playerData.GetCurrentPinvIndex();
-                if (args.length == 0) {
-                    index++;
-                    if (index > max - 1) {
-                        index = 0;
-                    }
-                } else if (args.length == 1) {
-                    index = Integer.parseInt(args[0]) - 1;
-                }
-
-                if (max > 1) {
-                    int result = playerData.ToggleInventory(index, false);
-                    switch (result) {
-                        case 0:
-                            player.sendMessage("Inventory changed to " + (index + 1));
-                            break;
-                        case 1:
-                            player.sendMessage("You can't change inventories right now.");
-                            break;
-                    }
-                } else {
-                    sender.sendMessage("You only have access to one inventory.");
-                    return true;
-                }
-
-
-            } catch (NumberFormatException ex) {
-                sender.sendMessage("The only argument should be the inventory you want to switch to!");
-                return false;
-            }
-            return true;
-        } else {
-            plugin.getLogger().severe("Only players can use this command.");
-            return false;
+    public Stream<String> onTab(CommandSender sender, String alias, String[] args) {
+        if (!(sender instanceof Player)) {
+            return Stream.empty();
         }
+        if (args.length == 1) {
+            Player player = (Player) sender;
+            PlayerData data = plugin.getLoadedPlayers().get(player.getUniqueId());
+            int max = data.getMaxInventories();
+            String[] nums = new String[max];
+            for (int i = 1; i <= max; i++) {
+                nums[i - 1] = i + "";
+            }
+            return Stream.of(nums);
+        }
+        return Stream.empty();
     }
 }
